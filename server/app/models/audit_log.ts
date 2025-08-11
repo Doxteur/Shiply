@@ -23,5 +23,3 @@ export default class AuditLog extends BaseModel {
   @column.dateTime({ columnName: 'created_at', autoCreate: true })
   declare createdAt: DateTime
 }
-
-

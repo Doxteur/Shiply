@@ -6,7 +6,12 @@ import { errors } from '@vinejs/vine'
 export default class PipelinesController {
   async store({ request, response, params }: HttpContext) {
     const projectId = Number(params.id)
-    const { name, yaml, version, environmentId } = request.only(['name', 'yaml', 'version', 'environmentId'])
+    const { name, yaml, version, environmentId } = request.only([
+      'name',
+      'yaml',
+      'version',
+      'environmentId',
+    ])
     if (!name || !yaml) {
       throw new errors.E_VALIDATION_ERROR('name et yaml sont requis')
     }
@@ -24,5 +29,3 @@ export default class PipelinesController {
     return response.created({ data: pipeline })
   }
 }
-
-

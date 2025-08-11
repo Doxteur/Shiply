@@ -17,9 +17,12 @@ export default class ProjectsController {
     if (exists) {
       throw new errors.E_VALIDATION_ERROR('key déjà utilisée')
     }
-    const project = await Project.create({ name, key, description: description ?? null, createdBy: auth.user?.id ?? null })
+    const project = await Project.create({
+      name,
+      key,
+      description: description ?? null,
+      createdBy: auth.user?.id ?? null,
+    })
     return response.created({ data: project })
   }
 }
-
-

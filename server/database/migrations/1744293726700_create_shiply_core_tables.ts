@@ -78,7 +78,12 @@ export default class extends BaseSchema {
         .enum('status', ['queued', 'running', 'success', 'failed', 'canceled'])
         .notNullable()
         .defaultTo('queued')
-      table.integer('triggered_by').unsigned().references('id').inTable('users').onDelete('SET NULL')
+      table
+        .integer('triggered_by')
+        .unsigned()
+        .references('id')
+        .inTable('users')
+        .onDelete('SET NULL')
       table.timestamp('queued_at').notNullable()
       table.timestamp('started_at').nullable()
       table.timestamp('finished_at').nullable()
@@ -125,10 +130,7 @@ export default class extends BaseSchema {
       table.json('labels').nullable()
       table.integer('max_concurrency').notNullable().defaultTo(1)
       table.integer('current_running').notNullable().defaultTo(0)
-      table
-        .enum('status', ['online', 'offline', 'busy'])
-        .notNullable()
-        .defaultTo('offline')
+      table.enum('status', ['online', 'offline', 'busy']).notNullable().defaultTo('offline')
       table.timestamp('last_heartbeat_at').nullable()
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').nullable()
@@ -184,5 +186,3 @@ export default class extends BaseSchema {
     this.schema.dropTable(this.projects)
   }
 }
-
-

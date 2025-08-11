@@ -11,5 +11,3 @@ export default class MetricsController {
     return response.ok(content)
   }
 }
-
-

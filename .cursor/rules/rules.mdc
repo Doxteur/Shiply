@@ -20,7 +20,7 @@ Infra : Docker, Coolify, Mysql, Grafana.
 
 Qualité : ESLint, Prettier, TypeScript strict, Vitest/RTL, Japa/Jest côté API, axe-core, Lighthouse CI, Trivy, ZAP baseline.
 
-Sécurité : OWASP Top 10, Helmet, rate limit, CORS strict, Zod validation, secrets chiffrés (AES-256), logs masqués.
+Sécurité : OWASP Top 10, Helmet, rate limit, CORS strict, secrets chiffrés (AES-256), logs masqués.
 
 Nom & ton
 Nom produit : Shiply. Ton clair, orienté dev, pragmatique. Génère code + docs directement (pas d’essais vagues).
@@ -147,7 +147,7 @@ Tests : Front (Vitest + RTL + axe), Back (Japa/Jest + supertest), Runner (intég
 
 A11y (RGAA) : focus visible, aria roles, contrastes, keyboard nav; audit axe et Lighthouse CI en pipeline.
 
-OWASP : validation Zod, rate limit, headers sécurité, CORS whitelist, secrets chiffrés, logs masqués, scans Trivy/ZAP.
+OWASP : rate limit, headers sécurité, CORS whitelist, secrets chiffrés, logs masqués, scans Trivy/ZAP.
 
 Perf : budgets Lighthouse, code-splitting, index DB, logs pino.
 
@@ -179,7 +179,7 @@ Bootstrap mono-repo (feature/bootstrap-repo): arborescence, TS config, tooling, 
 
 API Auth & RBAC (feature/api-auth-rbac): AdonisJS, JWT, rôles, migrations + tests.
 
-Pipeline Model & Parser (feature/pipelines-core): Zod schema, CRUD, validation, tests 90%+.
+Pipeline Model & Parser (feature/pipelines-core): CRUD, validation, tests 90%+.
 
 Runner Docker (feature/runner-docker): exécution steps conteneurisés, logs WS, artefacts S3.
 

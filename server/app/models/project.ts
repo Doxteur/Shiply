@@ -23,5 +23,3 @@ export default class Project extends BaseModel {
   @column.dateTime({ columnName: 'updated_at', autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }
-
-

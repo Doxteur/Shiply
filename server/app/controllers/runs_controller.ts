@@ -26,5 +26,3 @@ export default class RunsController {
     return response.created({ data: run })
   }
 }
-
-

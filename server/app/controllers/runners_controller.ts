@@ -25,5 +25,3 @@ export default class RunnersController {
     return response.ok({ data: runner })
   }
 }
-
-
