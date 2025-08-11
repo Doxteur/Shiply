@@ -66,6 +66,11 @@ export default defineConfig({
         name: 'functional',
         timeout: 30000,
       },
+      {
+        files: ['tests/**/*.spec(.ts|.js)'],
+        name: 'api',
+        timeout: 30000,
+      },
     ],
     forceExit: false,
   },
