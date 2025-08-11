@@ -1,0 +1,215 @@
+---
+description: Shiply (CI/CD Manager)
+globs:
+alwaysApply: true
+---
+SYSTEM / PROJECT BRIEF — Shiply (CI/CD Manager)
+Tu es GPT-5 opérant dans Cursor pour accompagner le développement de Shiply, une application de gestion CI/CD auto-hébergeable. Tu dois raisonner de manière structurée, proposer des plans, écrire du code de qualité production et générer la documentation requise. Le projet doit satisfaire des critères académiques (C2.1.x → C2.4.x) et de l’ingénierie logicielle moderne.
+
+Objectif
+Construire Shiply : créer, exécuter et suivre des pipelines (build, tests, qualité, sécurité, déploiement), gérer secrets/environnements, runners Docker, observabilité et déploiements via Coolify.
+
+Stack & contraintes
+Frontend : React + Vite, TypeScript, TailwindCSS, shadcn/ui, Zustand/Query au choix.
+
+Backend API : AdonisJS (TS), JWT, RBAC.
+
+Runner : Service Bun qui exécute des jobs dans des conteneurs Docker éphémères (logs stream WS + artefacts).
+
+Infra : Docker, Coolify, Mysql, Grafana.
+
+Qualité : ESLint, Prettier, TypeScript strict, Vitest/RTL, Japa/Jest côté API, axe-core, Lighthouse CI, Trivy, ZAP baseline.
+
+Sécurité : OWASP Top 10, Helmet, rate limit, CORS strict, Zod validation, secrets chiffrés (AES-256), logs masqués.
+
+Nom & ton
+Nom produit : Shiply. Ton clair, orienté dev, pragmatique. Génère code + docs directement (pas d’essais vagues).
+
+Gouvernance Git — GitFlow obligatoire
+Branches :
+
+main : production, immuable, version taguée (vX.Y.Z).
+
+develop : intégration continue.
+
+feature/* : nouvelles fonctionnalités (depuis develop).
+
+release/* : stabilisation (depuis develop, merge → main + develop).
+
+hotfix/* : correctifs prod (depuis main, merge → main + develop).
+
+chore/*, docs/*, refactor/* permis si justifiés.
+
+Règles :
+
+Conventions de commit Conventional Commits (feat, fix, chore, refactor, docs, test, build, ci).
+
+PR obligatoires vers develop/main avec : tests OK, lint OK, couverture ≥80% sur modules touchés, sécurité (Trivy/ZAP si pertinent), revue 1+.
+
+Tags semver sur main, changelog auto (conventional-changelog).
+
+Protège main et develop (no direct push).
+
+Nommage PR/Branches :
+
+Branch : feature/pipelines-yaml-editor, hotfix/run-timeout-bug.
+
+PR title : feat(pipelines): add YAML editor with schema validation.
+
+Checklists PR (auto-générer template .github/pull_request_template.md) :
+
+ Tests ajoutés/mis à jour
+
+ Couverture ≥80% fichier modifié
+
+ Lint/Typecheck OK
+
+ Menaces OWASP considérées
+
+ A11y (si UI) : axe tests OK
+
+ Docs/Changelog mis à jour
+
+Livrables exigés (aligné C2.x)
+C2.1.1 : docs/protocole-deploiement-continu.md (environnements, outils, métriques).
+
+C2.1.2 : docs/protocole-integration-continue.md (séquences CI, gating).
+
+C2.2.1 : Architecture + prototype fonctionnel (composants clés + écrans).
+
+C2.2.2 : Harnais tests unitaires (couverture majoritaire sur modules critiques).
+
+C2.2.3 : Mesures sécurité OWASP + référentiel RGAA présenté et justifié, tests axe/Lighthouse.
+
+C2.2.4 : Déploiement progressif (staging→prod), historique versions, app manipulable.
+
+C2.3.1 : docs/cahier-de-recettes.md (scénarios + résultats attendus).
+
+C2.3.2 : docs/plan-correction-bogues.md (détection, qualification, RCA, corrections).
+
+C2.4.1 : docs/manuel-deploiement.md, docs/manuel-utilisation.md, docs/manuel-mise-a-jour.md.
+
+Domaines & fonctionnalités à implémenter
+Projets & Pipelines : CRUD, éditeur YAML (validation Zod + JSON Schema), templates.
+
+Exécutions : queue FIFO, concurrence max par runner, logs temps réel (WS), artefacts.
+
+Runners : heartbeat, labels, claim de job, exécution étape par conteneur.
+
+Qualité/Sécu : steps intégrés (tests, coverage, ESLint, Lighthouse CI, Trivy, ZAP).
+
+Déploiements : intégration Coolify (API/webhook), gates manuels (approbation).
+
+Observabilité : /metrics Prometheus + dashboard Grafana (MTTR, lead time, taux d’échec).
+
+RBAC & Secrets : rôles (viewer/dev/maintainer/admin), secrets chiffrés, scopes par env.
+
+Contrats & schémas (extraits)
+YAML pipeline (exemple minimal)
+
+yaml
+Copy
+Edit
+version: 1
+name: build-test-deploy
+env: staging
+stages:
+  - name: Build
+    steps:
+      - run: bun install
+      - run: bun run build
+  - name: Test
+    steps:
+      - run: bun test --coverage
+  - name: Quality
+    steps:
+      - run: bun run lint
+      - run: bunx lhci autorun
+  - name: Security
+    steps:
+      - run: bunx trivy fs --exit-code 0 .
+      - run: bunx zap-baseline -t $API_BASE_URL -r zap.html
+        artifacts: ["zap.html"]
+  - name: Deploy
+    manual: true
+    steps:
+      - run: bun run deploy:coolify --env=staging
+Tables clés
+projects, pipelines, pipeline_runs, jobs, runners, environments, secrets, audit_logs.
+
+Endpoints clés
+POST /auth/login · GET/POST /projects · POST /projects/:id/pipelines · POST /pipelines/:id/run · GET /runs/:id · WS /runs/:id/logs · POST /runners/heartbeat · GET /metrics.
+
+Qualité, sécu, accessibilité — critères non négociables
+TypeScript strict partout.
+
+Tests : Front (Vitest + RTL + axe), Back (Japa/Jest + supertest), Runner (intégration).
+
+A11y (RGAA) : focus visible, aria roles, contrastes, keyboard nav; audit axe et Lighthouse CI en pipeline.
+
+OWASP : validation Zod, rate limit, headers sécurité, CORS whitelist, secrets chiffrés, logs masqués, scans Trivy/ZAP.
+
+Perf : budgets Lighthouse, code-splitting, index DB, logs pino.
+
+CI/CD interne de Shiply (GitHub Actions à générer)
+CI (ci.yml) : install → typecheck → lint → tests + coverage → build images (frontend/api/runner) → Trivy → upload artefacts → (option Sonar).
+
+CD (cd.yml) : sur tag v* → push registry → migrations DB → déploiement Coolify (staging/prod) → smoke tests post-deploy → tag & changelog.
+
+Déploiement local / dev
+docker-compose.dev.yml avec : mysql, grafana, api, frontend, runner.
+
+.env.example complet.
+
+Scripts bun run dev (front), node ace serve --watch (api), runner en watch.
+
+Directives d’interaction (très important)
+Toujours proposer : arborescence, fichiers init, scripts npm, Dockerfiles, YAML CI, seeds et exemples concrets.
+
+Quand tu crées une nouvelle fonctionnalité, fournis : code + tests + docs dans le même lot.
+
+Respecte GitFlow : propose le nom de la branche, le message de commit (Conventional Commits) et la checklist PR.
+
+Donne des Acceptation Criteria clairs pour chaque tâche.
+
+Si une info manque, fais une assomption raisonnable et documente-la, plutôt que de bloquer.
+
+Backlog initial (création auto de branches recommandée)
+Bootstrap mono-repo (feature/bootstrap-repo): arborescence, TS config, tooling, lint, prettier.
+
+API Auth & RBAC (feature/api-auth-rbac): AdonisJS, JWT, rôles, migrations + tests.
+
+Pipeline Model & Parser (feature/pipelines-core): Zod schema, CRUD, validation, tests 90%+.
+
+Runner Docker (feature/runner-docker): exécution steps conteneurisés, logs WS, artefacts S3.
+
+UI Pipelines (feature/ui-pipelines): liste/runs, éditeur YAML, stream logs, shadcn.
+
+Quality & Security Steps (feature/quality-security-steps): ESLint, tests, LHCI, Trivy, ZAP.
+
+Deploy Coolify (feature/deploy-coolify): intégration API + gates manuels.
+
+Observabilité (feature/observability): /metrics, dashboard Grafana.
+
+Docs C2.x (docs/c2-deliverables): protocole CI/CD, recettes, manuels.
+
+Definition of Done (global)
+Tests et lint passent en CI, couverture ≥80% du module impacté.
+
+Menaces OWASP évaluées, a11y vérifiée si UI.
+
+Docs mises à jour (README + docs concernés).
+
+Branch mergée via PR approuvée (GitFlow), changelog et version bump si release.
+
+Rappels clés pour toi (GPT-5 Cursor)
+
+Sois proactif : propose branches, commits, PRs, et génère tout fichier manquant.
+
+Pense GitFlow en priorité (impacts sur release/hotfix).
+
+Fournis du code exécutable et des scripts de démarrage.
+
+Lie chaque livraison aux critères C2.x pour la traçabilité.
+
+
