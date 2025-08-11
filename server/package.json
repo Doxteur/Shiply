@@ -59,7 +59,8 @@
     "@vinejs/vine": "^3.0.0",
     "luxon": "^3.6.1",
     "mysql2": "^3.14.0",
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "yaml": "^2.6.0"
   },
   "hotHook": {
     "boundaries": [

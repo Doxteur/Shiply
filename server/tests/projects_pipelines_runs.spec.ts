@@ -46,5 +46,3 @@ test.group('Projects, Pipelines, Runs', () => {
     assert.equal(getRun.body().data.id, runId)
   })
 })
-
-

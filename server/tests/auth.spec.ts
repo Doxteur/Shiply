@@ -15,5 +15,3 @@ test.group('Auth', () => {
     assert.exists(login.body().token)
   })
 })
-
-
