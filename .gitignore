@@ -1,4 +1,7 @@
 # bhvr/.gitignore
+#Cursor conf
+.cursor/rules/*
+
 # dependencies
 node_modules
 .pnp

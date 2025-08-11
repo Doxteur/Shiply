@@ -15,5 +15,3 @@ test.group('Runners & Metrics', () => {
     assert.include(metrics.text(), 'shiply_up 1')
   })
 })
-
-

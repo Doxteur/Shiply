@@ -90,7 +90,7 @@ C2.3.2 : docs/plan-correction-bogues.md (détection, qualification, RCA, correct
 C2.4.1 : docs/manuel-deploiement.md, docs/manuel-utilisation.md, docs/manuel-mise-a-jour.md.
 
 Domaines & fonctionnalités à implémenter
-Projets & Pipelines : CRUD, éditeur YAML (validation Zod + JSON Schema), templates.
+Projets & Pipelines : CRUD, éditeur YAML, templates.
 
 Exécutions : queue FIFO, concurrence max par runner, logs temps réel (WS), artefacts.
 

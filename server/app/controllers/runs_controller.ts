@@ -1,6 +1,8 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import PipelineRun from '#models/pipeline_run'
 import Pipeline from '#models/pipeline'
+import Job from '#models/job'
+import YAML from 'yaml'
 
 export default class RunsController {
   async show({ params, response }: HttpContext) {
@@ -23,6 +25,33 @@ export default class RunsController {
       commitSha: commitSha ?? null,
       ref: ref ?? null,
     })
+    // planifier les jobs depuis le YAML (stages[].steps[].run)
+    try {
+      const parsed = YAML.parse(pipeline.yaml)
+      const stages = Array.isArray(parsed?.stages) ? parsed.stages : []
+      let stepIndex = 0
+      for (const stage of stages) {
+        const steps = Array.isArray(stage?.steps) ? stage.steps : []
+        for (const step of steps) {
+          const command: string | undefined = step?.run
+          if (!command) continue
+          await Job.create({
+            runId: run.id,
+            stage: String(stage?.name ?? 'default'),
+            stepIndex: stepIndex++,
+            name: String(step?.name ?? `step-${stepIndex}`),
+            status: 'queued',
+            image: null,
+            command,
+            logsLocation: null,
+            artifactsLocation: null,
+            exitCode: null,
+          })
+        }
+      }
+    } catch {
+      // ignore parsing error for now
+    }
     return response.created({ data: run })
   }
 }
