@@ -18,7 +18,7 @@ test.group('Runners claim & finish', () => {
       .header('Authorization', `Bearer ${token}`)
       .json({
         name: 'p',
-        yaml: 'version: 1\nstages:\n  - name: build\n    steps:\n      - run: echo "hi"',
+        yaml: `version: 1\nname: p\nstages:\n  - name: build\n    steps:\n      - run: echo "hi"`,
       })
     pipe.assertStatus(201)
     const pipelineId = pipe.body().data.id as number
