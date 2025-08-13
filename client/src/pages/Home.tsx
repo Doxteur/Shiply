@@ -3,9 +3,26 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Search, Plus, GitBranch, PlayCircle, TimerReset, BarChart3, Activity, Folders, ExternalLink, Sparkles, TrendingUp } from 'lucide-react'
-import type { ComponentType } from 'react'
+import { useEffect, type ComponentType } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import type { AppDispatch, RootState } from '@/app/store'
+import { fetchProjects, selectAllProjects } from '@/app/features/projects/projectsSlice'
+import { useNavigate } from 'react-router'
 
 function Home() {
+  const dispatch = useDispatch<AppDispatch>()
+  const projects = useSelector(selectAllProjects)
+  const projectsLoading = useSelector((s: RootState) => s.projects.loading)
+  const navigate = useNavigate()
+
+  // Charger les projets récents au montage
+  useEffect(() => {
+    dispatch(fetchProjects())
+  }, [dispatch])
+
+  function handleCreateProject() {
+    navigate('/projects/new')
+  }
   return (
     <div className="min-h-full w-full bg-gradient-to-br from-background via-background to-muted/20">
       {/* Top bar */}
@@ -49,7 +66,7 @@ function Home() {
                   </CardDescription>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <Button className="rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30">
+                  <Button onClick={handleCreateProject} className="rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30">
                     <Plus className="h-4 w-4" />
                     Nouveau projet
                   </Button>
@@ -167,21 +184,28 @@ function Home() {
                   </CardTitle>
                   <CardDescription>Accès rapide aux projets actifs</CardDescription>
                 </div>
-                <Button size="sm" className="rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25">
+                <Button onClick={handleCreateProject} size="sm" className="rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25">
                   <Plus className="h-4 w-4" />
                   Nouveau
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {PROJECTS.map((p, i) => (
+              {projectsLoading && (
+                <>
+                  {['s1','s2','s3'].map((k) => (
+                    <div key={k} className="h-28 rounded-xl border border-border/40 bg-card/50 animate-pulse" />
+                  ))}
+                </>
+              )}
+              {!projectsLoading && projects.map((p, i) => (
                 <motion.div
-                  key={p.key}
+                  key={p.id}
                   initial={{ opacity: 0, y: 20, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ duration: 0.4, delay: 0.1 * i }}
                 >
-                  <ProjectCard {...p} />
+                  <ProjectCard key={p.id} name={p.name} keyProp={p.key} pipelines={Math.floor(Math.random()*5)+1} envs={["staging","production"]} lastRun={{ status: 'success', time: 'il y a 3 min' }} />
                 </motion.div>
               ))}
             </CardContent>
@@ -248,15 +272,15 @@ function RunStatus({ status }: { readonly status: RunStatusType }) {
   )
 }
 
-type Project = {
-  readonly key: string
+type ProjectCardModel = {
+  readonly keyProp: string
   readonly name: string
   readonly pipelines: number
   readonly envs: Array<'staging' | 'production'>
   readonly lastRun: { readonly status: RunStatusType; readonly time: string }
 }
 
-function ProjectCard(project: Project) {
+function ProjectCard(project: ProjectCardModel) {
   return (
     <motion.div
       whileHover={{ y: -2, scale: 1.02 }}
@@ -272,7 +296,7 @@ function ProjectCard(project: Project) {
             <div className="min-w-0 flex-1">
               <CardTitle className="truncate font-semibold">{project.name}</CardTitle>
               <CardDescription className="text-muted-foreground/80">
-                {project.key} • {project.pipelines} pipelines
+                {project.keyProp} • {project.pipelines} pipelines
               </CardDescription>
             </div>
           </div>
@@ -301,10 +325,6 @@ function ProjectCard(project: Project) {
   )
 }
 
-const PROJECTS: Project[] = [
-  { key: 'API', name: 'Shiply API', pipelines: 5, envs: ['staging', 'production'], lastRun: { status: 'success', time: 'il y a 3 min' } },
-  { key: 'WEB', name: 'Shiply Frontend', pipelines: 4, envs: ['staging'], lastRun: { status: 'failed', time: 'il y a 18 min' } },
-  { key: 'RUN', name: 'Runner Service', pipelines: 3, envs: ['staging', 'production'], lastRun: { status: 'running', time: 'en cours' } },
-]
+// obsolete placeholder removed (now fetched from API)
 
 export default Home

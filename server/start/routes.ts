@@ -15,6 +15,8 @@ const RunnersController = () => import('#controllers/runners_controller')
 const JobsController = () => import('#controllers/jobs_controller')
 const MetricsController = () => import('#controllers/metrics_controller')
 const JobLogsController = () => import('#controllers/job_logs_controller')
+const GithubIntegrationsController = () => import('#controllers/github_integrations_controller')
+
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 
@@ -55,4 +57,17 @@ router.group(() => {
   router.post('/jobs/:id/logs', [JobLogsController, 'append'])
   router.get('/jobs/:id/logs', [JobLogsController, 'show'])
   router.get('/jobs/:id/logs/stream', [JobLogsController, 'stream'])
+
+  // Integrations: GitHub OAuth
+  router
+    .get('/integrations/github/authorize', [GithubIntegrationsController, 'authorize'])
+    .use(middleware.auth())
+  // callback ne doit pas exiger l'auth côté client; on valide via state signé
+  router.get('/integrations/github/callback', [GithubIntegrationsController, 'callback'])
+  router
+    .get('/integrations/github/status', [GithubIntegrationsController, 'status'])
+    .use(middleware.auth())
+  router
+    .get('/integrations/github/repos', [GithubIntegrationsController, 'repos'])
+    .use(middleware.auth())
 })
