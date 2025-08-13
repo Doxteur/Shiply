@@ -2,6 +2,9 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Pipeline from '#models/pipeline'
 import Project from '#models/project'
 import { errors } from '@vinejs/vine'
+import Ajv from 'ajv'
+import YAML from 'yaml'
+import { pipelineJsonSchema } from '#services/pipeline_schema'
 
 export default class PipelinesController {
   async store({ request, response, params }: HttpContext) {
@@ -19,6 +22,19 @@ export default class PipelinesController {
     if (!project) {
       return response.notFound({ error: 'project not found' })
     }
+    // Validate YAML (JSON Schema)
+    try {
+      const parsed = YAML.parse(yaml)
+      const ajv = new Ajv({ allErrors: true })
+      const validate = ajv.compile(pipelineJsonSchema as any)
+      const ok = validate(parsed)
+      if (!ok) {
+        return response.status(422).json({ error: 'invalid_yaml', details: validate.errors })
+      }
+    } catch (e) {
+      return response.status(422).json({ error: 'invalid_yaml_parse', details: String(e) })
+    }
+
     const pipeline = await Pipeline.create({
       projectId: project.id,
       name,
