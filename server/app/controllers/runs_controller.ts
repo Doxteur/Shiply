@@ -41,7 +41,7 @@ export default class RunsController {
             stepIndex: stepIndex++,
             name: String(step?.name ?? `step-${stepIndex}`),
             status: 'queued',
-            image: null,
+            image: step?.image ?? null,
             command,
             logsLocation: null,
             artifactsLocation: null,

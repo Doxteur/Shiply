@@ -26,6 +26,7 @@ export const pipelineJsonSchema = {
               properties: {
                 name: { type: ['string', 'null'] },
                 run: { type: 'string', minLength: 1 },
+                image: { type: ['string', 'null'] },
                 artifacts: {
                   type: 'array',
                   items: { type: 'string' },

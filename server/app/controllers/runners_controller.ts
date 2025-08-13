@@ -13,11 +13,12 @@ export default class RunnersController {
     ])
     if (!name) return response.badRequest({ error: 'name is required' })
     const now = new Date() as any
+    const labelsJson = labels ? JSON.stringify(labels) : null
     const runner = await Runner.updateOrCreate(
       { name },
       {
         name,
-        labels: labels ?? null,
+        labels: labelsJson,
         maxConcurrency: maxConcurrency ?? 1,
         currentRunning: currentRunning ?? 0,
         status: 'online',
@@ -33,9 +34,10 @@ export default class RunnersController {
 
     const trx = await Database.transaction()
     try {
+      const labelsJson = labels ? JSON.stringify(labels) : null
       const runner = await Runner.updateOrCreate(
         { name },
-        { name, labels: labels ?? null, status: 'busy', lastHeartbeatAt: new Date() as any },
+        { name, labels: labelsJson, status: 'busy', lastHeartbeatAt: new Date() as any },
         { client: trx }
       )
 

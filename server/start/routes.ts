@@ -14,6 +14,7 @@ const RunsController = () => import('#controllers/runs_controller')
 const RunnersController = () => import('#controllers/runners_controller')
 const JobsController = () => import('#controllers/jobs_controller')
 const MetricsController = () => import('#controllers/metrics_controller')
+const JobLogsController = () => import('#controllers/job_logs_controller')
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 
@@ -50,4 +51,6 @@ router.group(() => {
 
   // Jobs
   router.post('/jobs/:id/finish', [JobsController, 'finish'])
+  router.post('/jobs/:id/logs', [JobLogsController, 'append'])
+  router.get('/jobs/:id/logs', [JobLogsController, 'show'])
 })
