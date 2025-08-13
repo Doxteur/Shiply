@@ -48,4 +48,56 @@ export default class JobLogsController {
       return response.notFound({ error: 'logs not found' })
     }
   }
+
+  async stream({ params, response, request }: HttpContext) {
+    const id = Number(params.id)
+    const filePath = this.getJobLogPath(id)
+    response.header('Content-Type', 'text/event-stream')
+    response.header('Cache-Control', 'no-cache')
+    response.header('Connection', 'keep-alive')
+    response.response.write(`: connected\n\n`)
+
+    const qs = request.qs() as Record<string, string | undefined>
+    const once =
+      (qs.once || '').toString().toLowerCase() === '1' ||
+      (qs.once || '').toString().toLowerCase() === 'true'
+
+    let lastSize = 0
+    let interval: NodeJS.Timeout | null = null
+
+    const pushChunk = async () => {
+      try {
+        const stats = await fs.stat(filePath).catch(() => null)
+        if (!stats) return
+        if (stats.size > lastSize) {
+          const buf = await fs.readFile(filePath, { encoding: 'utf8' })
+          const slice = buf.slice(lastSize)
+          lastSize = stats.size
+          if (slice) {
+            const data = slice.replace(/\r?\n/g, '\n')
+            console.log('data', data)
+            response.response.write(`data: ${data}\n\n`)
+          }
+        }
+      } catch {}
+    }
+
+    // push immediately once
+    await pushChunk()
+    if (once) {
+      try {
+        response.response.end()
+      } catch {}
+      return
+    }
+
+    interval = setInterval(pushChunk, 500)
+
+    request.request.on('close', () => {
+      if (interval) clearInterval(interval)
+      try {
+        response.response.end()
+      } catch {}
+    })
+  }
 }
