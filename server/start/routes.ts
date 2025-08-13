@@ -54,4 +54,5 @@ router.group(() => {
   router.post('/jobs/:id/finish', [JobsController, 'finish'])
   router.post('/jobs/:id/logs', [JobLogsController, 'append'])
   router.get('/jobs/:id/logs', [JobLogsController, 'show'])
+  router.get('/jobs/:id/logs/stream', [JobLogsController, 'stream'])
 })
