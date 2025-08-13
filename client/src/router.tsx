@@ -9,14 +9,15 @@ import { ProtectedRoute, PublicRoute } from '@/components/core/middlewares/AuthM
 export const router = createBrowserRouter([
   {
     path: '/',
+    element: (
+      <ProtectedRoute>
+        <RootLayout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         path: '/',
-        element: (
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        ),
+        element: <Home />,
       },
       {
         path: '/login',
@@ -28,31 +29,11 @@ export const router = createBrowserRouter([
       },
       {
         path: '/about',
-        element: (
-          <ProtectedRoute>
-            <RootLayout />
-          </ProtectedRoute>
-        ),
-        children: [
-          {
-            path: '/about',
-            element: <About />,
-          },
-        ],
+        element: <About />,
       },
       {
         path: '/contact',
-        element: (
-          <ProtectedRoute>
-            <RootLayout />
-          </ProtectedRoute>
-        ),
-        children: [
-          {
-            path: '/contact',
-            element: <Contact />,
-          },
-        ],
+        element: <Contact />,
       },
     ],
   },
