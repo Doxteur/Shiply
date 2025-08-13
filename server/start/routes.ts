@@ -41,6 +41,7 @@ router.group(() => {
   // Runs
   router.get('/runs/:id', [RunsController, 'show']).use(middleware.auth())
   router.post('/pipelines/:id/run', [RunsController, 'trigger']).use(middleware.auth())
+  router.get('/runs/:id/jobs', [RunsController, 'jobs']).use(middleware.auth())
 
   // Runners
   router.post('/runners/heartbeat', [RunnersController, 'heartbeat'])
