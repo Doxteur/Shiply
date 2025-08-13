@@ -8,7 +8,22 @@ export default class RunsController {
   async show({ params, response }: HttpContext) {
     const run = await PipelineRun.find(params.id)
     if (!run) return response.notFound({ error: 'run not found' })
-    return response.ok({ data: run })
+    const jobs = await Job.query().where('run_id', run.id).orderBy('step_index', 'asc')
+    const counts = {
+      queued: jobs.filter((j) => j.status === 'queued').length,
+      running: jobs.filter((j) => j.status === 'running').length,
+      success: jobs.filter((j) => j.status === 'success').length,
+      failed: jobs.filter((j) => j.status === 'failed').length,
+      canceled: jobs.filter((j) => j.status === 'canceled').length,
+      total: jobs.length,
+    }
+    let aggregatedStatus: 'queued' | 'running' | 'success' | 'failed' | 'canceled' = 'queued'
+    if (counts.failed > 0) aggregatedStatus = 'failed'
+    else if (counts.running > 0) aggregatedStatus = 'running'
+    else if (counts.success === counts.total && counts.total > 0) aggregatedStatus = 'success'
+    else if (counts.canceled > 0) aggregatedStatus = 'canceled'
+    else aggregatedStatus = counts.total > 0 ? 'queued' : run.status
+    return response.ok({ data: run, jobs, counts, aggregatedStatus })
   }
 
   async trigger({ params, response, auth, request }: HttpContext) {
@@ -53,5 +68,11 @@ export default class RunsController {
       // ignore parsing error for now
     }
     return response.created({ data: run })
+  }
+
+  async jobs({ params, response }: HttpContext) {
+    const runId = Number(params.id)
+    const jobs = await Job.query().where('run_id', runId).orderBy('step_index', 'asc')
+    return response.ok({ data: jobs })
   }
 }
