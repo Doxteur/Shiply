@@ -31,7 +31,6 @@ test.group('Runners claim & finish', () => {
 
     // Runner heartbeats and claims
     const hb = await client.post('/runners/heartbeat').json({ name: 'runner-A' })
-    console.log('hb', hb.body())
     hb.assertStatus(200)
 
     const claim = await client.post('/runners/claim').json({ name: 'runner-A' })

@@ -12,15 +12,15 @@ export async function getAuthToken(client: ApiClient) {
   })
 
   if (registerRes.status() !== 201) {
-    throw new Error(`Register failed: ${registerRes.status()} ${JSON.stringify(registerRes.body())}`)
+    throw new Error(
+      `Register failed: ${registerRes.status()} ${JSON.stringify(registerRes.body())}`
+    )
   }
 
   const raw = registerRes.body().token as any
-  const token = typeof raw === 'string' ? raw : raw?.value ?? raw?.token
+  const token = typeof raw === 'string' ? raw : (raw?.value ?? raw?.token)
   if (!token || typeof token !== 'string') {
     throw new Error('No token returned from register')
   }
   return token
 }
-
-
