@@ -2,7 +2,6 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Pipeline from '#models/pipeline'
 import Project from '#models/project'
 import { errors } from '@vinejs/vine'
-import Ajv from 'ajv'
 import YAML from 'yaml'
 import { pipelineJsonSchema } from '#services/pipeline_schema'
 
@@ -25,7 +24,9 @@ export default class PipelinesController {
     // Validate YAML (JSON Schema)
     try {
       const parsed = YAML.parse(yaml)
-      const ajv = new Ajv({ allErrors: true })
+      const ajvPkg = await import('ajv')
+      const AjvModule = ajvPkg.default as unknown as { new (opts?: any): any }
+      const ajv = new AjvModule({ allErrors: true })
       const validate = ajv.compile(pipelineJsonSchema as any)
       const ok = validate(parsed)
       if (!ok) {
