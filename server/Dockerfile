@@ -1,9 +1,10 @@
-FROM oven/bun:1 AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN bun install
+RUN apk add --no-cache bash && corepack enable || true
+RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; else yarn install; fi
 
 COPY . .
 COPY .env.example .env.example
@@ -11,13 +12,13 @@ COPY .env.example .env.example
 # Si .env n'existe pas, on le crée à partir de .env.example
 RUN [ -f .env ] || cp .env.example .env
 
-RUN bun run build
+RUN yarn build
 RUN cp .env build/.env
 
 WORKDIR /app/build
-RUN bun install --production
+RUN if [ -f yarn.lock ]; then yarn install --production=true --frozen-lockfile; else yarn install --production=true; fi
 
-FROM oven/bun:1
+FROM node:20-alpine
 
 WORKDIR /app
 
