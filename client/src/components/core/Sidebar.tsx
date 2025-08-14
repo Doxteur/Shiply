@@ -11,7 +11,6 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	Headset,
-	SlidersHorizontal,
 	LogOut,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
