@@ -1,0 +1,34 @@
+services:
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: template-nextgen-api-staging
+    ports:
+      - "3334:3333"
+    env_file:
+      - ./server/.env.staging
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - app-network
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx.Dockerfile
+    container_name: template-nextgen-nginx-staging
+    ports:
+      - "4445:80"
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+
