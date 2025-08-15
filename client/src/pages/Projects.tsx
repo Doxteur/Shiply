@@ -157,11 +157,11 @@ export default function Projects() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => navigate(`/projects/${project.id}/configure`)}
+                              onClick={() => navigate(`/projects/${project.id}`)}
                               className="flex-1 rounded-lg"
                             >
                               <Settings className="h-3 w-3 mr-1" />
-                              Configurer
+                              Détails
                             </Button>
                             <Button
                               size="sm"

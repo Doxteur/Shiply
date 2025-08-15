@@ -5,6 +5,40 @@ import Job from '#models/job'
 import YAML from 'yaml'
 
 export default class RunsController {
+  async latestByProject({ params, response }: HttpContext) {
+    const projectId = Number(params.id)
+    // get pipelines of project
+    const pipelines = await Pipeline.query().where('project_id', projectId)
+    const pipelineIds = pipelines.map((p) => p.id)
+    if (pipelineIds.length === 0) return response.ok({ data: [] })
+    // latest 10 runs across pipelines of the project
+    const runs = await PipelineRun.query()
+      .whereIn('pipeline_id', pipelineIds)
+      .orderBy('created_at', 'desc')
+      .limit(10)
+    return response.ok({ data: runs })
+  }
+
+  async statsByProject({ params, response }: HttpContext) {
+    const projectId = Number(params.id)
+    const pipelines = await Pipeline.query().where('project_id', projectId)
+    const pipelineIds = pipelines.map((p) => p.id)
+    if (pipelineIds.length === 0) {
+      return response.ok({
+        data: { total: 0, success: 0, failed: 0, running: 0, queued: 0, canceled: 0 },
+      })
+    }
+    const runs = await PipelineRun.query().whereIn('pipeline_id', pipelineIds)
+    const stats = { total: runs.length, success: 0, failed: 0, running: 0, queued: 0, canceled: 0 }
+    for (const r of runs) {
+      if (r.status === 'success') stats.success++
+      else if (r.status === 'failed') stats.failed++
+      else if (r.status === 'running') stats.running++
+      else if (r.status === 'queued') stats.queued++
+      else if (r.status === 'canceled') stats.canceled++
+    }
+    return response.ok({ data: stats })
+  }
   async show({ params, response }: HttpContext) {
     const run = await PipelineRun.find(params.id)
     if (!run) return response.notFound({ error: 'run not found' })

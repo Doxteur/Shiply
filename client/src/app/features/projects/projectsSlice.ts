@@ -9,6 +9,7 @@ type ProjectsState = {
   creating: boolean
   error: string | null
   selectedProjectId: number | null
+  createFormDraft: { name: string; key: string; description: string } | null
 }
 
 const initialState: ProjectsState = {
@@ -17,6 +18,7 @@ const initialState: ProjectsState = {
   creating: false,
   error: null,
   selectedProjectId: null,
+  createFormDraft: null,
 }
 
 export const fetchProjects = createAsyncThunk<Project[], void, { rejectValue: string }>(
@@ -50,6 +52,15 @@ const projectsSlice = createSlice({
     selectProject(state, action: PayloadAction<number | null>) {
       state.selectedProjectId = action.payload
     },
+    setCreateFormDraft(
+      state,
+      action: PayloadAction<{ name: string; key: string; description: string } | null>
+    ) {
+      state.createFormDraft = action.payload
+    },
+    clearCreateFormDraft(state) {
+      state.createFormDraft = null
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -80,7 +91,7 @@ const projectsSlice = createSlice({
   },
 })
 
-export const { selectProject } = projectsSlice.actions
+export const { selectProject, setCreateFormDraft, clearCreateFormDraft } = projectsSlice.actions
 export default projectsSlice.reducer
 
 export const selectAllProjects = (s: RootState) => (s.projects?.items ?? []) as Project[]

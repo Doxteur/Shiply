@@ -14,6 +14,10 @@ export default class Project extends BaseModel {
   @column()
   declare description: string | null
 
+  // Configuration projet (runMode, startCommand, dockerfilePath, composePath, defaultBranch, rootPath, envVars)
+  @column()
+  declare config: Record<string, unknown> | null
+
   @column({ columnName: 'created_by' })
   declare createdBy: number | null
 

@@ -6,6 +6,16 @@ import YAML from 'yaml'
 import { pipelineJsonSchema } from '#services/pipeline_schema'
 
 export default class PipelinesController {
+  async index({ params, response }: HttpContext) {
+    const projectId = Number(params.id)
+    const project = await Project.find(projectId)
+    if (!project) {
+      return response.notFound({ error: 'project not found' })
+    }
+    const pipelines = await Pipeline.query().where('project_id', projectId).orderBy('created_at', 'desc')
+    return response.ok({ data: pipelines })
+  }
+
   async store({ request, response, params }: HttpContext) {
     const projectId = Number(params.id)
     const { name, yaml, version, environmentId } = request.only([

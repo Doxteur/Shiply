@@ -61,6 +61,15 @@ export default function ProjectCreateFinalize() {
               initialKey={state.key}
               initialDescription={state.description}
               onCreated={() => navigate('/projects', { replace: true })}
+              config={{
+                runMode,
+                startCommand,
+                dockerfilePath,
+                composePath,
+                defaultBranch,
+                rootPath,
+                envVars,
+              }}
             />
           </CardContent>
         </Card>

@@ -1,24 +1,36 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch } from '@/app/store'
-import { createProject } from '@/app/features/projects/projectsSlice'
+import { createProject, setCreateFormDraft, clearCreateFormDraft } from '@/app/features/projects/projectsSlice'
+import type { RootState } from '@/app/store'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import axiosInstance from '@/app/utils/axios'
 
 type ProjectCreateFormProps = {
   readonly initialName?: string
   readonly initialKey?: string
   readonly initialDescription?: string
   readonly onCreated?: () => void
+  readonly config?: {
+    runMode?: 'command' | 'dockerfile' | 'compose'
+    startCommand?: string
+    dockerfilePath?: string
+    composePath?: string
+    defaultBranch?: string
+    rootPath?: string
+    envVars?: Array<{ key: string; value: string }>
+  }
 }
 
-export default function ProjectCreateForm({ initialName, initialKey, initialDescription, onCreated }: ProjectCreateFormProps) {
+export default function ProjectCreateForm({ initialName, initialKey, initialDescription, onCreated, config }: ProjectCreateFormProps) {
   const dispatch = useDispatch<AppDispatch>()
+  const draft = useSelector((s: RootState) => s.projects.createFormDraft)
 
-  const [name, setName] = useState(initialName ?? '')
-  const [key, setKey] = useState(initialKey ?? '')
-  const [description, setDescription] = useState(initialDescription ?? '')
+  const [name, setName] = useState(draft?.name ?? initialName ?? '')
+  const [key, setKey] = useState(draft?.key ?? initialKey ?? '')
+  const [description, setDescription] = useState(draft?.description ?? initialDescription ?? '')
   const [formError, setFormError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
 
@@ -34,6 +46,11 @@ export default function ProjectCreateForm({ initialName, initialKey, initialDesc
     if (typeof initialDescription === 'string') setDescription(initialDescription)
   }, [initialDescription])
 
+  // persister en brouillon dans le store à la volée
+  useEffect(() => {
+    dispatch(setCreateFormDraft({ name, key, description }))
+  }, [dispatch, name, key, description])
+
   const canSubmit = useMemo(() => name.trim().length > 1 && key.trim().length > 1, [name, key])
 
   async function onSubmit(e: React.FormEvent) {
@@ -45,7 +62,21 @@ export default function ProjectCreateForm({ initialName, initialKey, initialDesc
     }
     try {
       setCreating(true)
-      await dispatch(createProject({ name: name.trim(), key: key.trim(), description: description.trim() || undefined })).unwrap()
+      const created = await dispatch(
+        createProject({ name: name.trim(), key: key.trim(), description: description.trim() || undefined })
+      ).unwrap()
+
+      // Patch de configuration si fournie
+      if (config && created?.id) {
+        try {
+          await axiosInstance.patch(`/projects/${created.id}/config`, config)
+        } catch (err) {
+          console.error(err)
+          setFormError("Le projet a été créé, mais l'enregistrement de la configuration a échoué. Vous pourrez la définir plus tard dans la page projet.")
+          // On continue quand même
+        }
+      }
+      dispatch(clearCreateFormDraft())
       if (onCreated) {
         onCreated()
         return

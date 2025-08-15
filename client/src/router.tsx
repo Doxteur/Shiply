@@ -8,6 +8,7 @@ import { ProtectedRoute, PublicRoute } from '@/components/core/middlewares/AuthM
 import Projects from '@/pages/Projects';
 import ProjectCreate from '@/pages/ProjectCreate';
 import ProjectCreateFinalize from '@/pages/ProjectCreateFinalize';
+import ProjectDetails from '@/pages/ProjectDetails';
 
 export const router = createBrowserRouter([
   // Route publique (hors layout protégé)
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
       { path: '/projects', element: <Projects /> },
       { path: '/projects/new', element: <ProjectCreate /> },
       { path: '/projects/new/finalize', element: <ProjectCreateFinalize /> },
+      { path: '/projects/:id', element: <ProjectDetails /> },
       { path: '/about', element: <About /> },
       { path: '/contact', element: <Contact /> },
     ],

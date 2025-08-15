@@ -27,6 +27,10 @@ export interface PipelineRun {
   status: JobStatus
   triggeredBy?: ID | null
   queuedAt?: string
+  startedAt?: string | null
+  finishedAt?: string | null
+  createdAt?: string
+  updatedAt?: string | null
   commitSha?: string | null
   ref?: string | null
 }
@@ -47,4 +51,13 @@ export interface Job {
 
 export type ApiItemResponse<T> = { data: T }
 export type ApiListResponse<T> = { data: T[] }
+
+export type ProjectRunStats = {
+  total: number
+  success: number
+  failed: number
+  running: number
+  queued: number
+  canceled: number
+}
 

@@ -89,7 +89,6 @@ export default function ProjectCreate() {
     const initial = {
       name: repo.name,
       key: deriveKeyFromName(repo.name),
-      description: repo.html_url,
       provider: 'github' as const,
       full_name: repo.full_name,
     }

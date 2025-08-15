@@ -205,7 +205,7 @@ function Home() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ duration: 0.4, delay: 0.1 * i }}
                 >
-                  <ProjectCard key={p.id} name={p.name} keyProp={p.key} pipelines={Math.floor(Math.random()*5)+1} envs={["staging","production"]} lastRun={{ status: 'success', time: 'il y a 3 min' }} />
+                  <ProjectCard id={p.id} key={p.id} name={p.name} keyProp={p.key} pipelines={Math.floor(Math.random()*5)+1} envs={["staging","production"]} lastRun={{ status: 'success', time: 'il y a 3 min' }} />
                 </motion.div>
               ))}
             </CardContent>
@@ -273,6 +273,7 @@ function RunStatus({ status }: { readonly status: RunStatusType }) {
 }
 
 type ProjectCardModel = {
+  readonly id: number
   readonly keyProp: string
   readonly name: string
   readonly pipelines: number
@@ -281,12 +282,13 @@ type ProjectCardModel = {
 }
 
 function ProjectCard(project: ProjectCardModel) {
+  const navigate = useNavigate()
   return (
     <motion.div
       whileHover={{ y: -2, scale: 1.02 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-card/80 via-card/60 to-card/40 backdrop-blur-sm shadow-lg transition-all hover:shadow-xl">
+      <Card onClick={() => navigate(`/projects/${project.id}`)} className="group relative overflow-hidden border-0 bg-gradient-to-br from-card/80 via-card/60 to-card/40 backdrop-blur-sm shadow-lg transition-all hover:shadow-xl cursor-pointer">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-0 transition-opacity group-hover:opacity-100" />
         <CardHeader className="relative pb-3">
           <div className="flex items-start gap-3">
@@ -315,7 +317,7 @@ function ProjectCard(project: ProjectCardModel) {
               <RunStatus status={project.lastRun.status} />
               <span>{project.lastRun.time}</span>
             </div>
-            <Button size="sm" variant="outline" className="rounded-lg border-border/40 bg-background/50 backdrop-blur-sm hover:bg-background/80">
+            <Button onClick={(e) => { e.stopPropagation(); navigate(`/projects/${project.id}`) }} size="sm" variant="outline" className="rounded-lg border-border/40 bg-background/50 backdrop-blur-sm hover:bg-background/80">
               <ExternalLink className="h-4 w-4" />
             </Button>
           </div>
