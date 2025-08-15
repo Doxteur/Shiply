@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { useNavigate, useLocation } from "react-router";
 
 function LoginForm() {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error, isAuthenticated } = useSelector(
+  const { loading, error } = useSelector(
     (state: RootState) => state.auth
   );
   const navigate = useNavigate();
@@ -70,13 +70,7 @@ function LoginForm() {
       });
   };
 
-  // Redirection après connexion réussie (seulement si authentifié)
-  useEffect(() => {
-    if (isAuthenticated && !loading && !error) {
-      const from = location.state?.from || "/";
-      navigate(from, { replace: true });
-    }
-  }, [isAuthenticated, loading, error, navigate, location]);
+  // Note: on laisse la redirection uniquement dans le then() du login pour éviter les boucles
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">

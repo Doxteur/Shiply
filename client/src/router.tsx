@@ -5,8 +5,21 @@ import { Contact } from '@/pages/Contact';
 import { RootLayout } from '@/components/core/layouts/RootLayout';
 import LoginForm from './components/services/auth/LoginForm';
 import { ProtectedRoute, PublicRoute } from '@/components/core/middlewares/AuthMiddleware';
+import Projects from '@/pages/Projects';
+import ProjectCreate from '@/pages/ProjectCreate';
+import ProjectCreateFinalize from '@/pages/ProjectCreateFinalize';
 
 export const router = createBrowserRouter([
+  // Route publique (hors layout protégé)
+  {
+    path: '/login',
+    element: (
+      <PublicRoute>
+        <LoginForm />
+      </PublicRoute>
+    ),
+  },
+  // Espace applicatif protégé
   {
     path: '/',
     element: (
@@ -15,26 +28,12 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      {
-        path: '/',
-        element: <Home />,
-      },
-      {
-        path: '/login',
-        element: (
-          <PublicRoute>
-            <LoginForm />
-          </PublicRoute>
-        ),
-      },
-      {
-        path: '/about',
-        element: <About />,
-      },
-      {
-        path: '/contact',
-        element: <Contact />,
-      },
+      { path: '/', element: <Home /> },
+      { path: '/projects', element: <Projects /> },
+      { path: '/projects/new', element: <ProjectCreate /> },
+      { path: '/projects/new/finalize', element: <ProjectCreateFinalize /> },
+      { path: '/about', element: <About /> },
+      { path: '/contact', element: <Contact /> },
     ],
   },
 ]);
