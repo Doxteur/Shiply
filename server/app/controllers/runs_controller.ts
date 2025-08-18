@@ -136,4 +136,81 @@ export default class RunsController {
     const jobs = await Job.query().where('run_id', runId).orderBy('step_index', 'asc')
     return response.ok({ data: jobs })
   }
+
+  async deploy({ params, response, auth }: HttpContext) {
+    const runId = Number(params.id)
+    const run = await PipelineRun.find(runId)
+    if (!run) return response.notFound({ error: 'run not found' })
+    const pipeline = await Pipeline.find(run.pipelineId)
+    if (!pipeline) return response.notFound({ error: 'pipeline not found' })
+
+    // charger config projet via relation pipeline -> project_id
+    const projectId = (pipeline as any).projectId
+    const project = await (await import('#models/project')).default.find(projectId)
+    if (!project) return response.notFound({ error: 'project not found' })
+    let cfg: any = (project as any).config
+    try {
+      cfg = typeof cfg === 'string' ? JSON.parse(cfg) : cfg || {}
+    } catch {
+      cfg = {}
+    }
+
+    // déterminer le driver
+    const runMode: string = cfg?.runMode || (cfg?.composePath ? 'compose' : cfg?.dockerfilePath ? 'dockerfile' : cfg?.startCommand ? 'command' : 'compose')
+    const driver = runMode === 'compose' ? 'compose' : runMode === 'dockerfile' ? 'dockerfile' : 'command'
+
+    // step_index suivant
+    const last = await Job.query().where('run_id', run.id).orderBy('step_index', 'desc').first()
+    const nextIndex = last ? last.stepIndex + 1 : 0
+
+    const job = await Job.create({
+      runId: run.id,
+      stage: 'Deploy',
+      stepIndex: nextIndex,
+      name: `deploy:${driver}`,
+      status: 'queued',
+      image: null,
+      command: `__shiply_deploy__:${driver}`,
+      logsLocation: null,
+      artifactsLocation: null,
+      exitCode: null,
+    })
+
+    return response.created({ data: job })
+  }
+
+  async cancel({ params, response }: HttpContext) {
+    const runId = Number(params.id)
+    const run = await PipelineRun.find(runId)
+    if (!run) return response.notFound({ error: 'run not found' })
+    const jobs = await Job.query().where('run_id', run.id)
+    const affectedRunnerIds = new Set<number>()
+    for (const j of jobs) {
+      if (j.status === 'queued' || j.status === 'running') {
+        ;(j as any).status = 'canceled'
+        ;(j as any).finishedAt = new Date() as any
+        await j.save()
+        const rid: number | null = (j as any).runnerId ?? null
+        if (rid) affectedRunnerIds.add(rid)
+      }
+    }
+    ;(run as any).status = 'canceled'
+    ;(run as any).finishedAt = new Date() as any
+    await run.save()
+
+    // Mettre à jour les runners affectés pour les remettre 'online' si plus rien ne tourne
+    const { default: Runner } = await import('#models/runner')
+    for (const rid of affectedRunnerIds) {
+      const count = await Job.query().where('runner_id', rid).where('status', 'running').count('* as total')
+      const total = Number((count[0] as any)?.$extras?.total ?? 0)
+      const runner = await Runner.find(rid)
+      if (runner) {
+        ;(runner as any).currentRunning = total
+        ;(runner as any).status = total > 0 ? 'busy' : 'online'
+        ;(runner as any).lastHeartbeatAt = new Date() as any
+        await runner.save()
+      }
+    }
+    return response.ok({ data: run })
+  }
 }

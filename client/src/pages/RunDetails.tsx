@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, ListTree, Logs, TerminalSquare } from 'lucide-react'
+import axiosInstance from '@/app/utils/axios'
 
 export default function RunDetails() {
   const { id } = useParams()
@@ -170,9 +171,40 @@ export default function RunDetails() {
                   Statut du run: <Badge variant="outline" className={`ml-1 ${runStatusBadge}`}>{run?.status ?? '—'}</Badge>
                 </CardDescription>
               </div>
-              <Button size="sm" variant="outline" className="rounded-lg" onClick={() => setLogs('')}>
-                <TerminalSquare className="mr-2 h-4 w-4" /> Clear
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" className="rounded-lg" onClick={() => setLogs('')}>
+                  <TerminalSquare className="mr-2 h-4 w-4" /> Clear
+                </Button>
+                {(run?.status === 'running' || run?.status === 'queued') && (
+                  <Button size="sm" variant="destructive" className="rounded-lg" onClick={async () => {
+                    try {
+                      await axiosInstance.post(`/runs/${runId}/cancel`)
+                      await dispatch(fetchRun({ id: runId }))
+                      await dispatch(fetchRunJobs({ runId }))
+                    } catch (err) {
+                      console.error('Error canceling run', err)
+                    }
+                  }}>
+                    Stopper
+                  </Button>
+                )}
+                {run?.status === 'success' && (
+                  <Button size="sm" className="rounded-lg" onClick={async () => {
+                    try {
+                      await axiosInstance.post(`/runs/${runId}/deploy`)
+                      // rafraîchir jobs et sélectionner le job Deploy si présent
+                      await dispatch(fetchRunJobs({ runId }))
+                      const refreshed = (jobs || []) as Array<{ id: number; stage: string }>
+                      const deployJob = refreshed.find((j) => j.stage === 'Deploy')
+                      if (deployJob) setSelectedJobId(deployJob.id)
+                    } catch {
+                      // noop
+                    }
+                  }}>
+                    Déployer
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>

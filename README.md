@@ -202,19 +202,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
 
 ## 🚀 Déploiement
 
-### Frontend
-```bash
-cd client
-bun run build
-# Déployer le dossier dist/ sur votre plateforme
-```
-
-### Backend
-```bash
-cd server
-bun run build
-# Déployer avec Bun, Node.js ou Cloudflare Workers
-```
+Voir `docs/shiply-deploy-manager.md` — Shiply intègre un orchestrateur de déploiement interne (pas de Coolify).
 
 ## 📝 Scripts disponibles
 

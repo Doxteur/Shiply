@@ -43,6 +43,7 @@ router.group(() => {
   router.get('/projects', [ProjectsController, 'index']).use(middleware.auth())
   router.post('/projects', [ProjectsController, 'store']).use(middleware.auth())
   router.patch('/projects/:id/config', [ProjectsController, 'updateConfig']).use(middleware.auth())
+  router.delete('/projects/:id', [ProjectsController, 'destroy']).use(middleware.auth())
 
   // Pipelines
   router.get('/projects/:id/pipelines', [PipelinesController, 'index']).use(middleware.auth())
@@ -60,6 +61,8 @@ router.group(() => {
     .use(middleware.auth())
   router.get('/projects/:id/runs', [RunsController, 'indexByProject']).use(middleware.auth())
   router.get('/projects/:id/runs/stats', [RunsController, 'statsByProject']).use(middleware.auth())
+  router.post('/runs/:id/deploy', [RunsController, 'deploy']).use(middleware.auth())
+  router.post('/runs/:id/cancel', [RunsController, 'cancel']).use(middleware.auth())
 
   // Runners
   router.post('/runners/heartbeat', [RunnersController, 'heartbeat'])

@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Job from '#models/job'
+import Runner from '#models/runner'
 import PipelineRun from '#models/pipeline_run'
 import Pipeline from '#models/pipeline'
 import Project from '#models/project'
@@ -56,6 +57,23 @@ export default class JobsController {
       await run.save()
     }
 
+    // Libérer le runner si plus aucun job en cours dessus
+    const runnerId: number | null = (job as any).runnerId ?? null
+    if (runnerId) {
+      const runningCount = await Job.query()
+        .where('runner_id', runnerId)
+        .where('status', 'running')
+        .count('* as total')
+      const total = Number((runningCount[0] as any)?.$extras?.total ?? 0)
+      const runner = await Runner.find(runnerId)
+      if (runner) {
+        ;(runner as any).currentRunning = total
+        ;(runner as any).status = total > 0 ? 'busy' : 'online'
+        ;(runner as any).lastHeartbeatAt = new Date() as any
+        await runner.save()
+      }
+    }
+
     return response.ok({ data: job })
   }
 
@@ -93,6 +111,7 @@ export default class JobsController {
         workdirHost,
         workdirInContainer,
         envVars,
+        config: cfg,
       },
     })
   }
