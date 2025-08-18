@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Runner from '#models/runner'
 import Job from '#models/job'
+import PipelineRun from '#models/pipeline_run'
 import Database from '@adonisjs/lucid/services/db'
 
 export default class RunnersController {
@@ -55,6 +56,14 @@ export default class RunnersController {
       ;(job as any).runnerId = runner.id
       job.startedAt = new Date() as any
       await job.save()
+
+      // Marquer le run comme démarré si ce n'est pas déjà le cas
+      const run = await PipelineRun.query({ client: trx }).where('id', job.runId).first()
+      if (run && run.status !== 'running') {
+        ;(run as any).status = 'running'
+        ;(run as any).startedAt = new Date() as any
+        await run.save()
+      }
 
       await trx.commit()
       return response.ok({ data: job })

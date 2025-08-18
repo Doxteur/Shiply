@@ -51,6 +51,7 @@ export interface Job {
 
 export type ApiItemResponse<T> = { data: T }
 export type ApiListResponse<T> = { data: T[] }
+export type ApiPaginatedResponse<T> = { data: T[]; meta: { total: number; perPage: number; currentPage: number; lastPage: number } }
 
 export type ProjectRunStats = {
   total: number
@@ -59,5 +60,17 @@ export type ProjectRunStats = {
   running: number
   queued: number
   canceled: number
+}
+
+export interface ProjectConfig {
+  runMode?: 'command' | 'dockerfile' | 'compose'
+  startCommand?: string
+  dockerfilePath?: string
+  composePath?: string
+  defaultBranch?: string
+  rootPath?: string
+  envVars?: Array<{ key: string; value: string }>
+  repositoryFullName?: string // e.g. owner/repo
+  pipelinePath?: string // e.g. .shiply.yml
 }
 

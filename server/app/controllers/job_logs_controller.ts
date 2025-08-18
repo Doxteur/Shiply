@@ -45,7 +45,9 @@ export default class JobLogsController {
       response.header('Content-Type', 'text/plain; charset=utf-8')
       return response.ok(content)
     } catch {
-      return response.notFound({ error: 'logs not found' })
+      // Si le fichier de logs n'existe pas encore, retourner 200 vide pour éviter un 404 côté front
+      response.header('Content-Type', 'text/plain; charset=utf-8')
+      return response.ok('')
     }
   }
 
@@ -74,8 +76,7 @@ export default class JobLogsController {
           const slice = buf.slice(lastSize)
           lastSize = stats.size
           if (slice) {
-            const data = slice.replace(/\r?\n/g, '\n')
-            console.log('data', data)
+            const data = slice.replace(/\r/g, '\n')
             response.response.write(`data: ${data}\n\n`)
           }
         }

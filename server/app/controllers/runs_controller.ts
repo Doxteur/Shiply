@@ -19,6 +19,33 @@ export default class RunsController {
     return response.ok({ data: runs })
   }
 
+  async indexByProject({ params, request, response }: HttpContext) {
+    const projectId = Number(params.id)
+    const { page = 1, perPage = 10 } = request.qs()
+    const pipelines = await Pipeline.query().where('project_id', projectId)
+    const pipelineIds = pipelines.map((p) => p.id)
+    if (pipelineIds.length === 0) {
+      return response.ok({
+        data: [],
+        meta: { total: 0, perPage: Number(perPage), currentPage: Number(page), lastPage: 0 },
+      })
+    }
+    const paginator = await PipelineRun.query()
+      .whereIn('pipeline_id', pipelineIds)
+      .orderBy('created_at', 'desc')
+      .paginate(Number(page), Number(perPage))
+    const json = paginator.toJSON()
+    return response.ok({
+      data: json.data,
+      meta: {
+        total: json.meta.total,
+        perPage: json.meta.perPage,
+        currentPage: json.meta.currentPage,
+        lastPage: json.meta.lastPage,
+      },
+    })
+  }
+
   async statsByProject({ params, response }: HttpContext) {
     const projectId = Number(params.id)
     const pipelines = await Pipeline.query().where('project_id', projectId)

@@ -2,6 +2,10 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Project from '#models/project'
 import { errors } from '@vinejs/vine'
 import db from '@adonisjs/lucid/services/db'
+import * as RepoWorkspace from '#services/repo_workspace_service'
+import UserIntegration from '#models/user_integration'
+import * as CryptoService from '#services/crypto_service'
+import env from '#start/env'
 
 export default class ProjectsController {
   async index({ response }: HttpContext) {
@@ -52,6 +56,9 @@ export default class ProjectsController {
       'defaultBranch',
       'rootPath',
       'envVars',
+      // champs nécessaires à la synchro GitHub
+      'repositoryFullName',
+      'pipelinePath',
     ])
     // Normaliser rootPath null -> '/'
     if (Object.prototype.hasOwnProperty.call(body, 'rootPath') && body.rootPath === null) {
@@ -78,6 +85,29 @@ export default class ProjectsController {
         ;(updated as any).config = JSON.parse((updated as any).config)
       } catch {}
     }
+    // Si repoFullName est défini, on matérialise le repo dans le workspace
+    try {
+      const repoFullName = (next as any).repositoryFullName as string | undefined
+      const defaultBranch = (next as any).defaultBranch as string | undefined
+      if (repoFullName) {
+        // Récupérer le token GitHub de l'utilisateur courant (MVP: premier du provider)
+        const integ = await UserIntegration.query().where('provider', 'github').first()
+        const token = integ
+          ? CryptoService.decryptString(integ.accessTokenEnc, env.get('APP_KEY'))
+          : undefined
+        const targetDirName = `project_${id}`
+        await RepoWorkspace.cloneOrUpdateRepo({
+          repoFullName,
+          branch: defaultBranch,
+          targetDirName,
+          githubToken: token,
+        })
+      }
+    } catch (e) {
+      // Ne pas bloquer la réponse si le clone échoue; retourner l'info au client
+      return response.ok({ data: updated, cloneError: String(e) })
+    }
+
     return response.ok({ data: updated })
   }
 }

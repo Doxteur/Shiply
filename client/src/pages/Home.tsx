@@ -3,22 +3,84 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Search, Plus, GitBranch, PlayCircle, TimerReset, BarChart3, Activity, Folders, ExternalLink, Sparkles, TrendingUp } from 'lucide-react'
-import { useEffect, type ComponentType } from 'react'
+import { useEffect, useMemo, type ComponentType } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '@/app/store'
 import { fetchProjects, selectAllProjects } from '@/app/features/projects/projectsSlice'
+import { fetchPipelines } from '@/app/features/pipelines/pipelinesSlice'
+import { fetchLatestRunsByProject, fetchProjectRunStats } from '@/app/features/runs/runsSlice'
 import { useNavigate } from 'react-router'
 
 function Home() {
   const dispatch = useDispatch<AppDispatch>()
   const projects = useSelector(selectAllProjects)
   const projectsLoading = useSelector((s: RootState) => s.projects.loading)
+  const pipelinesByProjectId = useSelector((s: RootState) => s.pipelines.byProjectId)
+  const runsState = useSelector((s: RootState) => s.runs)
   const navigate = useNavigate()
 
   // Charger les projets récents au montage
   useEffect(() => {
     dispatch(fetchProjects())
   }, [dispatch])
+
+  // Charger pipelines et derniers runs pour chaque projet
+  useEffect(() => {
+    if (projects.length === 0) return
+    for (const p of projects) {
+      dispatch(fetchPipelines({ projectId: p.id }))
+      dispatch(fetchLatestRunsByProject({ projectId: p.id }))
+      dispatch(fetchProjectRunStats({ projectId: p.id }))
+    }
+  }, [dispatch, projects])
+
+  // Construire la liste globale des derniers runs (tous projets)
+  const latestRunsAllProjects = useMemo(() => {
+    const allIds = projects.flatMap((p) => runsState.latestByProjectId[p.id] ?? [])
+    const uniqIds = Array.from(new Set(allIds))
+    const runs = uniqIds.map((id) => runsState.byId[id]).filter(Boolean) as Array<{
+      id: number; pipelineId: number; status: 'queued'|'running'|'success'|'failed'|'canceled'; createdAt?: string
+    }>
+    // trier par date desc
+    runs.sort((a, b) => (new Date(b.createdAt ?? 0).getTime()) - (new Date(a.createdAt ?? 0).getTime()))
+    return runs.slice(0, 10)
+  }, [projects, runsState])
+
+  // Map pipelineId -> pipeline pour récupérer le nom rapidement
+  const pipelineById = useMemo(() => {
+    const map = new Map<number, { id: number; name: string }>()
+    for (const list of Object.values(pipelinesByProjectId)) {
+      for (const pl of list) map.set(pl.id, { id: pl.id, name: pl.name })
+    }
+    return map
+  }, [pipelinesByProjectId])
+
+  const kpis = useMemo(() => {
+    let pipelinesCount = 0
+    for (const list of Object.values(pipelinesByProjectId)) pipelinesCount += list.length
+
+    let totalRuns = 0
+    let success = 0
+    let failed = 0
+    let canceled = 0
+    for (const p of projects) {
+      const st = runsState.statsByProjectId[p.id]
+      if (st) {
+        totalRuns += st.total
+        success += st.success
+        failed += st.failed
+        canceled += st.canceled
+      }
+    }
+    const denom = success + failed + canceled
+    const successRate = denom > 0 ? Math.round((success / denom) * 100) : null
+    return {
+      projects: projects.length,
+      pipelines: pipelinesCount,
+      runs: totalRuns,
+      successRate,
+    }
+  }, [pipelinesByProjectId, runsState.statsByProjectId, projects])
 
   function handleCreateProject() {
     navigate('/projects/new')
@@ -103,10 +165,10 @@ function Home() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4"
         >
-          <StatCard icon={Folders} title="Projets" value="6" trend="+1 ce mois" />
-          <StatCard icon={GitBranch} title="Pipelines" value="14" trend="+3" />
-          <StatCard icon={PlayCircle} title="Runs (24h)" value="48" trend="-5%" />
-          <StatCard icon={Activity} title="Succès (%)" value="92%" trend="+3%" />
+          <StatCard icon={Folders} title="Projets" value={String(kpis.projects)} trend="—" />
+          <StatCard icon={GitBranch} title="Pipelines" value={String(kpis.pipelines)} trend="—" />
+          <StatCard icon={PlayCircle} title="Runs (total)" value={String(kpis.runs)} trend="—" />
+          <StatCard icon={Activity} title="Succès (%)" value={kpis.successRate !== null ? `${kpis.successRate}%` : '—'} trend="—" />
         </motion.div>
 
                 {/* Derniers runs */}
@@ -132,7 +194,7 @@ function Home() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {RUNS.map((r, i) => (
+              {latestRunsAllProjects.map((r, i) => (
                 <motion.div
                   key={r.id}
                   initial={{ opacity: 0, x: -20 }}
@@ -145,16 +207,16 @@ function Home() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
-                      <span className="truncate font-medium">{r.pipeline}</span>
-                      <RunStatus status={r.status} />
+                      <span className="truncate font-medium">{pipelineById.get(r.pipelineId)?.name ?? `pipeline #${r.pipelineId}`}</span>
+                      <RunStatus status={r.status === 'failed' ? 'failed' : r.status === 'running' || r.status === 'queued' ? 'running' : 'success'} />
                     </div>
                     <div className="text-sm text-muted-foreground/80">
-                      run #{r.id} • <span className="capitalize">{r.env}</span> • {r.time}
+                      run #{r.id} • {r.createdAt ? new Date(r.createdAt).toLocaleString() : ''}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <BarChart3 className="h-4 w-4" />
-                    <span className="font-mono">{r.duration}</span>
+                    <span className="font-mono">—</span>
                   </div>
                 </motion.div>
               ))}
@@ -245,11 +307,7 @@ function StatCard({ icon: Icon, title, value, trend }: StatProps) {
 
 // placeholder supprimé (non utilisé)
 
-const RUNS = [
-  { id: 1452, pipeline: 'build-test-deploy', env: 'staging', status: 'success', duration: '2m13s', time: 'il y a 5 min' },
-  { id: 1451, pipeline: 'quality-scan', env: 'staging', status: 'failed', duration: '1m01s', time: 'il y a 20 min' },
-  { id: 1450, pipeline: 'api-deploy', env: 'production', status: 'running', duration: '—', time: 'en cours' },
-] as const
+// anciens RUNS mock supprimés (remplacés par des données réelles)
 
 type RunStatusType = 'success' | 'running' | 'failed'
 

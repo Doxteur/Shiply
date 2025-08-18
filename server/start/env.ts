@@ -35,4 +35,6 @@ export default await Env.create(new URL('../', import.meta.url), {
   GITHUB_CLIENT_SECRET: Env.schema.string.optional(),
   GITHUB_CALLBACK_URL: Env.schema.string.optional(),
   FRONTEND_URL: Env.schema.string.optional(),
+  // Workspace local pour matérialiser les projets (par défaut ./app)
+  WORKSPACE_DIR: Env.schema.string.optional(),
 })

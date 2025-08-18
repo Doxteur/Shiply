@@ -24,12 +24,15 @@ export default function ProjectCreateFinalize() {
   const [composePath, setComposePath] = useState<string>('docker-compose.yml')
   const [defaultBranch, setDefaultBranch] = useState<string>('main')
   const [rootPath, setRootPath] = useState<string>('')
-  const [envVars, setEnvVars] = useState<Array<{ key: string; value: string }>>([
-    { key: 'NODE_ENV', value: 'development' },
+  const [envVars, setEnvVars] = useState<Array<{ id: string; key: string; value: string }>>([
+    { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, key: 'NODE_ENV', value: 'development' },
   ])
 
   function addEnvVar() {
-    setEnvVars((prev) => [...prev, { key: '', value: '' }])
+    setEnvVars((prev) => [
+      ...prev,
+      { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, key: '', value: '' },
+    ])
   }
 
   function removeEnvVar(index: number) {
@@ -68,7 +71,9 @@ export default function ProjectCreateFinalize() {
                 composePath,
                 defaultBranch,
                 rootPath,
-                envVars,
+                envVars: envVars.map(({ key, value }) => ({ key, value })),
+                repositoryFullName: state.full_name,
+                pipelinePath: '.shiply.yml',
               }}
             />
           </CardContent>
@@ -88,10 +93,11 @@ export default function ProjectCreateFinalize() {
           <CardContent>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">Branche par défaut</label>
+                <label htmlFor="defaultBranch" className="mb-2 block text-sm font-medium text-foreground">Branche par défaut</label>
                 <div className="relative">
                   <GitBranch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
+                    id="defaultBranch"
                     value={defaultBranch}
                     onChange={(e) => setDefaultBranch(e.target.value)}
                     placeholder="ex: main"
@@ -101,10 +107,11 @@ export default function ProjectCreateFinalize() {
                 <div className="mt-2 text-xs text-muted-foreground/80">Branche utilisée par défaut pour les opérations CI/CD</div>
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">Chemin racine (optionnel)</label>
+                <label htmlFor="rootPath" className="mb-2 block text-sm font-medium text-foreground">Chemin racine (optionnel)</label>
                 <div className="relative">
                   <Folder className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
+                    id="rootPath"
                     value={rootPath}
                     onChange={(e) => setRootPath(e.target.value)}
                     placeholder="ex: apps/web"
@@ -179,10 +186,11 @@ export default function ProjectCreateFinalize() {
                 transition={{ duration: 0.3 }}
                 className="rounded-xl border border-border/20 bg-gradient-to-br from-card/60 via-card/40 to-card/60 p-4 backdrop-blur-sm"
               >
-                <label className="mb-3 block text-sm font-medium text-foreground">Commande de lancement</label>
+                <label htmlFor="startCommand" className="mb-3 block text-sm font-medium text-foreground">Commande de lancement</label>
                 <div className="relative">
                   <Play className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
+                    id="startCommand"
                     value={startCommand}
                     onChange={(e) => setStartCommand(e.target.value)}
                     placeholder="Ex: bun run dev"
@@ -202,10 +210,11 @@ export default function ProjectCreateFinalize() {
                 transition={{ duration: 0.3 }}
                 className="rounded-xl border border-border/20 bg-gradient-to-br from-card/60 via-card/40 to-card/60 p-4 backdrop-blur-sm"
               >
-                <label className="mb-3 block text-sm font-medium text-foreground">Chemin du Dockerfile</label>
+                <label htmlFor="dockerfilePath" className="mb-3 block text-sm font-medium text-foreground">Chemin du Dockerfile</label>
                 <div className="relative">
                   <Boxes className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
+                    id="dockerfilePath"
                     value={dockerfilePath}
                     onChange={(e) => setDockerfilePath(e.target.value)}
                     placeholder="Ex: Dockerfile"
@@ -228,10 +237,11 @@ export default function ProjectCreateFinalize() {
                 transition={{ duration: 0.3 }}
                 className="rounded-xl border border-border/20 bg-gradient-to-br from-card/60 via-card/40 to-card/60 p-4 backdrop-blur-sm"
               >
-                <label className="mb-3 block text-sm font-medium text-foreground">Chemin du fichier docker-compose</label>
+                <label htmlFor="composePath" className="mb-3 block text-sm font-medium text-foreground">Chemin du fichier docker-compose</label>
                 <div className="relative">
                   <FileCog className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
+                    id="composePath"
                     value={composePath}
                     onChange={(e) => setComposePath(e.target.value)}
                     placeholder="Ex: docker-compose.yml"
@@ -260,16 +270,17 @@ export default function ProjectCreateFinalize() {
             <div className="space-y-4">
               {envVars.map((pair, idx) => (
                 <motion.div
-                  key={`${idx}-${pair.key}`}
-                  initial={{ opacity: 0, x: -20 }}
+                  key={pair.id}
+                  initial={false}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: idx * 0.05 }}
+                  transition={{ duration: 0.2 }}
                   className="group rounded-xl border border-border/20 bg-gradient-to-br from-card/60 via-card/40 to-card/60 p-4 backdrop-blur-sm hover:border-border/30 transition-all"
                 >
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-12 items-end">
                     <div className="sm:col-span-4">
-                      <label className="mb-1 block text-xs font-medium text-muted-foreground">Variable</label>
+                      <label htmlFor={`env-key-${idx}`} className="mb-1 block text-xs font-medium text-muted-foreground">Variable</label>
                       <input
+                        id={`env-key-${idx}`}
                         value={pair.key}
                         onChange={(e) => updateEnvVar(idx, 'key', e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ''))}
                         placeholder="NOM_VARIABLE"
@@ -277,8 +288,9 @@ export default function ProjectCreateFinalize() {
                       />
                     </div>
                     <div className="sm:col-span-7">
-                      <label className="mb-1 block text-xs font-medium text-muted-foreground">Valeur</label>
+                      <label htmlFor={`env-val-${idx}`} className="mb-1 block text-xs font-medium text-muted-foreground">Valeur</label>
                       <input
+                        id={`env-val-${idx}`}
                         value={pair.value}
                         onChange={(e) => updateEnvVar(idx, 'value', e.target.value)}
                         placeholder="Valeur de la variable"

@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import type { AppDispatch } from '@/app/store'
+import type { AppDispatch, RootState } from '@/app/store'
 import { createProject, setCreateFormDraft, clearCreateFormDraft } from '@/app/features/projects/projectsSlice'
-import type { RootState } from '@/app/store'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,6 +20,8 @@ type ProjectCreateFormProps = {
     defaultBranch?: string
     rootPath?: string
     envVars?: Array<{ key: string; value: string }>
+    repositoryFullName?: string
+    pipelinePath?: string
   }
 }
 
@@ -70,6 +71,21 @@ export default function ProjectCreateForm({ initialName, initialKey, initialDesc
       if (config && created?.id) {
         try {
           await axiosInstance.patch(`/projects/${created.id}/config`, config)
+          // Auto-synchronisation du pipeline si repositoryFullName est défini
+          if (config.repositoryFullName) {
+            try {
+              await axiosInstance.post(
+                `/projects/${created.id}/pipelines/sync-repo`,
+                {
+                  ...(config.pipelinePath ? { pipelinePath: config.pipelinePath } : {}),
+                  ...(config.defaultBranch ? { ref: config.defaultBranch } : {}),
+                }
+              )
+            } catch (err) {
+              console.error(err)
+              setFormError("Le pipeline n'a pas pu être synchronisé automatiquement. Vous pourrez lancer la synchronisation depuis la page projet.")
+            }
+          }
         } catch (err) {
           console.error(err)
           setFormError("Le projet a été créé, mais l'enregistrement de la configuration a échoué. Vous pourrez la définir plus tard dans la page projet.")

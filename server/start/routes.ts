@@ -47,6 +47,9 @@ router.group(() => {
   // Pipelines
   router.get('/projects/:id/pipelines', [PipelinesController, 'index']).use(middleware.auth())
   router.post('/projects/:id/pipelines', [PipelinesController, 'store']).use(middleware.auth())
+  router
+    .post('/projects/:id/pipelines/sync-repo', [PipelinesController, 'syncFromRepo'])
+    .use(middleware.auth())
 
   // Runs
   router.get('/runs/:id', [RunsController, 'show']).use(middleware.auth())
@@ -55,6 +58,7 @@ router.group(() => {
   router
     .get('/projects/:id/runs/latest', [RunsController, 'latestByProject'])
     .use(middleware.auth())
+  router.get('/projects/:id/runs', [RunsController, 'indexByProject']).use(middleware.auth())
   router.get('/projects/:id/runs/stats', [RunsController, 'statsByProject']).use(middleware.auth())
 
   // Runners
@@ -66,6 +70,7 @@ router.group(() => {
 
   // Jobs
   router.post('/jobs/:id/finish', [JobsController, 'finish'])
+  router.get('/jobs/:id/context', [JobsController, 'context'])
   router.post('/jobs/:id/logs', [JobLogsController, 'append'])
   router.get('/jobs/:id/logs', [JobLogsController, 'show'])
   router.get('/jobs/:id/logs/stream', [JobLogsController, 'stream'])

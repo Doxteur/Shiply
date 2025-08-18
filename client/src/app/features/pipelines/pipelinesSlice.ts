@@ -42,6 +42,18 @@ export const createPipeline = createAsyncThunk<Pipeline, { projectId: number; na
   }
 )
 
+export const syncPipelineFromRepo = createAsyncThunk<Pipeline, { projectId: number; pipelinePath?: string }, { rejectValue: string }>(
+  'pipelines/syncFromRepo',
+  async ({ projectId, pipelinePath }, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post<ApiItemResponse<Pipeline>>(`/projects/${projectId}/pipelines/sync-repo`, pipelinePath ? { pipelinePath } : {})
+      return data.data
+    } catch (e: unknown) {
+      return rejectWithValue((e as Error).message ?? 'sync pipeline failed')
+    }
+  }
+)
+
 const pipelinesSlice = createSlice({
   name: 'pipelines',
   initialState,
@@ -76,6 +88,17 @@ const pipelinesSlice = createSlice({
       .addCase(createPipeline.rejected, (state, action) => {
         state.creating = false
         state.error = action.payload ?? 'create failed'
+      })
+      .addCase(syncPipelineFromRepo.fulfilled, (state, action: PayloadAction<Pipeline>) => {
+        const pid = action.payload.projectId
+        const list = state.byProjectId[pid] ?? []
+        const idx = list.findIndex((p) => p.id === action.payload.id)
+        if (idx >= 0) {
+          list[idx] = action.payload
+          state.byProjectId[pid] = [...list]
+        } else {
+          state.byProjectId[pid] = [action.payload, ...list]
+        }
       })
   },
 })

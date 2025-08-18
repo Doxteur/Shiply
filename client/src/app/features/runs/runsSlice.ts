@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import axiosInstance from '@/app/utils/axios'
-import type { ApiItemResponse, ApiListResponse, PipelineRun, Job, ProjectRunStats } from '@shared/types'
+import type { ApiItemResponse, ApiListResponse, ApiPaginatedResponse, PipelineRun, Job, ProjectRunStats } from '@shared/types'
 
 type RunsState = {
   byId: Record<number, PipelineRun>
@@ -8,6 +8,7 @@ type RunsState = {
   latestIds: number[]
   latestByProjectId: Record<number, number[]>
   statsByProjectId: Record<number, ProjectRunStats>
+  pagesByProjectId: Record<number, { ids: number[]; total: number; perPage: number; currentPage: number; lastPage: number }>
   loading: boolean
   error: string | null
 }
@@ -18,6 +19,7 @@ const initialState: RunsState = {
   latestIds: [],
   latestByProjectId: {},
   statsByProjectId: {},
+  pagesByProjectId: {},
   loading: false,
   error: null,
 }
@@ -30,6 +32,18 @@ export const triggerRun = createAsyncThunk<PipelineRun, { pipelineId: number; co
       return data.data
     } catch (e: unknown) {
       return rejectWithValue((e as Error).message ?? 'trigger run failed')
+    }
+  }
+)
+
+export const fetchProjectRunsPage = createAsyncThunk<{ projectId: number; page: number; perPage: number; runs: PipelineRun[]; total: number; lastPage: number }, { projectId: number; page?: number; perPage?: number }, { rejectValue: string }>(
+  'runs/fetchProjectRunsPage',
+  async ({ projectId, page = 1, perPage = 10 }, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.get<ApiPaginatedResponse<PipelineRun>>(`/projects/${projectId}/runs`, { params: { page, perPage } })
+      return { projectId, page, perPage, runs: data.data, total: data.meta.total, lastPage: data.meta.lastPage }
+    } catch (e: unknown) {
+      return rejectWithValue((e as Error).message ?? 'fetch runs page failed')
     }
   }
 )
@@ -130,6 +144,27 @@ const runsSlice = createSlice({
         state.statsByProjectId[action.payload.projectId] = action.payload.stats
       })
       .addCase(fetchProjectRunStats.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload ?? 'fetch failed'
+      })
+      .addCase(fetchProjectRunsPage.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchProjectRunsPage.fulfilled, (state, action) => {
+        state.loading = false
+        for (const run of action.payload.runs) {
+          state.byId[run.id] = run
+        }
+        state.pagesByProjectId[action.payload.projectId] = {
+          ids: action.payload.runs.map((r) => r.id),
+          total: action.payload.total,
+          perPage: action.payload.perPage,
+          currentPage: action.payload.page,
+          lastPage: action.payload.lastPage,
+        }
+      })
+      .addCase(fetchProjectRunsPage.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload ?? 'fetch failed'
       })
