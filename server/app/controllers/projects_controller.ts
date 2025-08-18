@@ -61,7 +61,7 @@ export default class ProjectsController {
       'pipelinePath',
     ])
     // Normaliser rootPath null -> '/'
-    if (Object.prototype.hasOwnProperty.call(body, 'rootPath') && body.rootPath === null) {
+    if (Object.hasOwn?.(body, 'rootPath') && body.rootPath === null) {
       ;(body as any).rootPath = '/'
     }
     const project = await Project.find(id)
@@ -109,5 +109,29 @@ export default class ProjectsController {
     }
 
     return response.ok({ data: updated })
+  }
+
+  async destroy({ params, response }: HttpContext) {
+    const id = Number(params.id)
+    const project = await Project.find(id)
+    if (!project) return response.notFound({ error: 'project not found' })
+
+    // Empêcher la suppression si des runs sont en cours/queue
+    const busy = await db
+      .from('pipeline_runs')
+      .join('pipelines', 'pipeline_runs.pipeline_id', 'pipelines.id')
+      .where('pipelines.project_id', id)
+      .whereIn('pipeline_runs.status', ['queued', 'running'])
+      .count('* as total')
+    const total = Number((busy[0] as any)?.total ?? (busy[0] as any)?.['count(*)'] ?? 0)
+    if (total > 0) {
+      return response.conflict({ error: 'project has running or queued runs' })
+    }
+
+    await db.from('projects').where('id', id).delete()
+    try {
+      await RepoWorkspace.removeProjectWorkspace(id)
+    } catch {}
+    return response.ok({ success: true, message: 'project deleted' })
   }
 }

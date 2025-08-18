@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '@/app/store'
-import { fetchProjects, selectAllProjects } from '@/app/features/projects/projectsSlice'
+import { fetchProjects, selectAllProjects, deleteProject } from '@/app/features/projects/projectsSlice'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +18,17 @@ export default function Projects() {
   useEffect(() => {
     dispatch(fetchProjects())
   }, [dispatch])
+
+  async function handleDeleteProject(id: number) {
+    const ok = window.confirm('Supprimer ce projet ? Cette action est irréversible.')
+    if (!ok) return
+    try {
+      await dispatch(deleteProject({ id })).unwrap()
+      dispatch(fetchProjects())
+    } catch (e) {
+      console.error('delete project failed', e)
+    }
+  }
 
   const getProjectStatus = () => {
     const statuses = ['configured', 'incomplete', 'needs-setup'] as const
@@ -171,6 +182,14 @@ export default function Projects() {
                             >
                               <Play className="h-3 w-3 mr-1" />
                               Pipelines
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteProject(project.id)}
+                              className="rounded-lg"
+                            >
+                              Supprimer
                             </Button>
                           </div>
                         </CardContent>

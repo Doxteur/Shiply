@@ -43,3 +43,13 @@ export async function cloneOrUpdateRepo(params: {
   await exec(`git clone --depth 1 ${branchArg} ${repoUrl} ${targetPath}`)
   return { path: targetPath }
 }
+
+export async function removeProjectWorkspace(projectId: number): Promise<void> {
+  const root = await ensureWorkspace()
+  const targetPath = `${root}/project_${projectId}`
+  try {
+    await rm(targetPath, { recursive: true, force: true })
+  } catch {
+    // noop
+  }
+}

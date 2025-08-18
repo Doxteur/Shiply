@@ -22,7 +22,7 @@ export default class RunnersController {
         labels: labelsJson,
         maxConcurrency: maxConcurrency ?? 1,
         currentRunning: currentRunning ?? 0,
-        status: 'online',
+        status: (currentRunning ?? 0) > 0 ? 'busy' : 'online',
         lastHeartbeatAt: now,
       }
     )

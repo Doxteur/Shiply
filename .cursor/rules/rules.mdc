@@ -213,3 +213,80 @@ Fournis du code exécutable et des scripts de démarrage.
 Lie chaque livraison aux critères C2.x pour la traçabilité.
 
 
+Shiply — Rules (sans Coolify, avec Shiply Deploy Manager)
+Remplacer toute mention de Coolify par un orchestrateur interne: Shiply Deploy Manager.
+Objectif: après un pipeline, déclencher un déploiement via des “drivers” internes (compose/dockerfile/command), suivre l’avancement et exposer des actions (rollback, promote).
+Contexte et objectifs
+Construire, exécuter et suivre des pipelines (build, tests, qualité, sécurité, déploiement).
+Gérer secrets/environnements, runners Docker, observabilité.
+Déployer via Shiply Deploy Manager (pas d’outil externe).
+Respecter GitFlow, TypeScript strict, tests, OWASP, A11y.
+Flux post-pipeline (déploiement)
+Si gate manuel activé: “Approuver le déploiement” sur l’étape Deploy.
+Déclenchement du driver défini par project.config.runMode:
+compose: docker compose -f <composePath> up -d
+dockerfile: docker build -f <dockerfilePath> . + docker run/compose minimal
+command: exécuter startCommand
+Logs de déploiement streamés dans le job Deploy (SSE).
+Smoke tests post-deploy (health checks) → statut OK/KO.
+Publication d’URLs utiles (app/API) si configurées.
+Actions: rollback, re-run, promote (staging → prod), tag/changelog (optionnel).
+Drivers de déploiement (choix par projet)
+compose
+Requiert composePath dans project.config.
+Exécution dans le workspace cloné (WORKSPACE_DIR/project_<id>/<rootPath?>).
+dockerfile
+Requiert dockerfilePath.
+Build image + run (ou docker compose minimal).
+command
+Requiert startCommand.
+Exécution directe (MVP: process détaché via runner; à terme: supervisé/service).
+Runner et workspace
+Runner parle au daemon Docker (Windows: DOCKER_HOST=tcp://localhost:2375 recommandé).
+Jobs montent le workspace: /workspace + rootPath si présent.
+Logs jobs/Deploy streamés en temps réel (SSE + fallback polling UI).
+Artefacts: à ajouter (stockage local/S3-like), non bloquant pour MVP.
+Modèle de config projet
+project.config (JSON):
+runMode: compose | dockerfile | command
+composePath?: string
+dockerfilePath?: string
+startCommand?: string
+rootPath: string (par défaut /, normalisé)
+defaultBranch: string
+repositoryFullName: string (org/repo)
+envVars: { key, value }[]
+API à implémenter (déploiement interne)
+POST /runs/:id/deploy → déclenche l’étape Deploy selon project.config.runMode.
+POST /runs/:id/rollback (optionnel MVP+) → retourne au dernier déploiement sain.
+POST /runs/:id/promote (optionnel MVP+) → staging → prod.
+GET /runs/:id/deploy/status (optionnel) → statut temps réel (sinon via job + SSE).
+Sécurité: auth JWT requise; journaliser audit.
+UI (RunDetails et ProjectDetails)
+Bouton “Déployer” (si gate) → appelle POST /runs/:id/deploy.
+Logs déploiement en direct dans la console (comme les autres jobs).
+Badges statut run/job qui se mettent à jour automatiquement.
+CTAs post-déploy: “Ouvrir app”, “Ouvrir API”, “Rollback”, “Promouvoir”.
+Historique des déploiements accessible depuis le projet.
+Qualité/Sécurité/A11y
+TypeScript strict partout, ESLint/Prettier OK.
+Tests: API (Japa/supertest), Front (Vitest/RTL + axe).
+OWASP Top 10: rate limit, CORS strict, headers sécurité, secrets chiffrés (AES-256-GCM), logs masqués.
+A11y: focus visible, labels + htmlFor, navigation clavier OK.
+GitFlow et livrables
+Branches: feature/* → PR vers develop, release/* → main.
+Commits: Conventional Commits.
+PR checklist: tests OK, lint/typecheck OK, couverture ≥80% sur modules touchés.
+Docs: docs/shiply-deploy-manager.md, README.md à jour.
+C2.x: relier chaque livraison aux critères (CI/CD, déploiement progressif, manuels).
+Acceptation (MVP Deploy)
+Depuis un run OK, déclencher un deploy en un clic.
+Driver compose opérationnel (up -d) avec logs temps réel.
+Statut run agrégé correct (success/failed/canceled) + timestamps.
+Smoke test simple (HTTP 200 sur endpoint configuré) et affichage du résultat.
+À faire ensuite
+Artefacts (upload/téléchargement).
+Rollback/Promote.
+Notifications (mail/webhook).
+Observabilité (metrics + dashboard).
+Tu peux copier-coller ce contenu dans docs/rules.mdc. Si tu veux, je peux aussi l’ajouter au repo et te donner les commandes de commit étape par étape.

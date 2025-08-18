@@ -2,10 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "@/app/store";
-import {
-  fetchProjects,
-  selectAllProjects,
-} from "@/app/features/projects/projectsSlice";
+import { fetchProjects, selectAllProjects, deleteProject } from "@/app/features/projects/projectsSlice";
 import { fetchPipelines, syncPipelineFromRepo } from "@/app/features/pipelines/pipelinesSlice";
 import {
   fetchLatestRunsByProject,
@@ -14,6 +11,7 @@ import {
 } from "@/app/features/runs/runsSlice";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import axiosInstance from "@/app/utils/axios";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -111,6 +109,30 @@ export default function ProjectDetails() {
     dispatch(fetchProjectRunStats({ projectId }));
   }
 
+  async function handleDeployLatest() {
+    const latest = latestRuns[0];
+    if (!latest) return;
+    try {
+      await axiosInstance.post(`/runs/${latest.id}/deploy`);
+      navigate(`/runs/${latest.id}`);
+    } catch (err) {
+      console.error('Error deploying latest run', err)
+    }
+  }
+
+  async function handleDeleteProject() {
+    if (!projectId) return;
+    const ok = window.confirm("Supprimer ce projet ? Cette action est irréversible.");
+    if (!ok) return;
+    try {
+      await dispatch(deleteProject({ id: projectId })).unwrap();
+      navigate("/projects");
+      dispatch(fetchProjects());
+    } catch (err) {
+      console.error('Error deleting project', err)
+    }
+  }
+
   return (
     <div className="min-h-full w-full bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header avec navigation */}
@@ -147,10 +169,24 @@ export default function ProjectDetails() {
               <Play className="mr-2 h-4 w-4" /> Déclencher Run
             </Button>
             <Button
+              onClick={handleDeployLatest}
+              disabled={!latestRuns[0] || latestRuns[0]?.status !== "success"}
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-600/90 shadow-lg shadow-emerald-500/25 disabled:opacity-50"
+            >
+              Déployer
+            </Button>
+            <Button
               variant="outline"
               className="rounded-xl border-border/40 bg-background/50 backdrop-blur-sm hover:bg-background/80"
             >
               <Settings className="mr-2 h-4 w-4" /> Configurer
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteProject}
+              className="rounded-xl"
+            >
+              Supprimer
             </Button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import Docker from 'dockerode'
+import { spawn } from 'node:child_process'
 import type { Readable } from 'node:stream'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -8,17 +9,28 @@ const API_URL = process.env.API_URL || 'http://localhost:3333'
 const api = axios.create({ baseURL: API_URL, timeout: 3000 })
 const RUNNER_NAME = process.env.RUNNER_NAME || `runner-${Math.random().toString(36).slice(2, 8)}`
 
-async function heartbeat() {
+async function heartbeat(currentRunning: number) {
   await api.post(`/runners/heartbeat`, {
     name: RUNNER_NAME,
     labels: { docker: false },
     maxConcurrency: 1,
+    currentRunning,
   })
 }
 
 async function claim() {
   const res = await api.post(`/runners/claim`, { name: RUNNER_NAME })
   return res.data?.data ?? null
+}
+
+async function isRunCanceled(runId: number): Promise<boolean> {
+  try {
+    const res = await api.get(`/runs/${runId}`)
+    const status: string | undefined = res.data?.data?.status
+    return status === 'canceled'
+  } catch {
+    return false
+  }
 }
 
 async function tryClient(client: Docker): Promise<boolean> {
@@ -63,7 +75,7 @@ function sanitizeLogText(input: string): string {
   let out = input.replace(/\r/g, "\n")
   // Supprimer les séquences ANSI/VT100 couleurs et commandes courantes
   out = out.replace(/\x1B\[[0-9;]*[A-Za-z]/g, '')
-  // Nettoyer OSC (]... BEL or ST)
+  // Nettoyer OSC (ESC ] ... BEL ou ST)
   out = out.replace(/\x1B\].*?(\x07|\x1B\\)/g, '')
   // Compacter les lignes multiples créées par les CR
   out = out.replace(/\n{3,}/g, '\n\n')
@@ -79,6 +91,68 @@ async function execJob(job: any) {
   const envVars: Array<{ key: string; value: string }> = Array.isArray(ctx.envVars) ? ctx.envVars : []
   if (!workdirHost || !fs.existsSync(workdirHost)) {
     throw new Error(`workspace does not exist: ${workdirHost}`)
+  }
+
+  // Déploiement géré côté host (drivers compose/dockerfile/command)
+  if (typeof job.command === 'string' && job.command.startsWith('__shiply_deploy__:')) {
+    const driver = job.command.split(':')[1] || 'compose'
+    const cfg = (ctx as any).config || {}
+    const append = async (text: string) => {
+      if (!text) return
+      try {
+        await api.post(`/jobs/${job.id}/logs`, { chunk: sanitizeLogText(text) })
+      } catch {}
+    }
+    const runCmd = (cmd: string, args: string[], cwd: string) =>
+      new Promise<number>((resolve) => {
+        const p = spawn(cmd, args, { cwd, env: process.env })
+        p.stdout.on('data', (d) => append(d.toString('utf8')))
+        p.stderr.on('data', (d) => append(d.toString('utf8')))
+        const cancelInterval = setInterval(async () => {
+          // Annulation coopérative: si run annulé, tuer le process
+          if (await isRunCanceled(job.runId)) {
+            try { p.kill('SIGTERM') } catch {}
+          }
+        }, 500)
+        p.on('close', (code) => { clearInterval(cancelInterval); resolve(code ?? 1) })
+      })
+
+    let exit = 1
+    if (driver === 'compose') {
+      const composePath: string | undefined = cfg.composePath
+      if (!composePath) throw new Error('composePath missing in project.config')
+      await append(`[deploy] docker compose -f ${composePath} up -d\n`)
+      exit = await runCmd('docker', ['compose', '-f', composePath, 'up', '-d'], workdirHost)
+    } else if (driver === 'dockerfile') {
+      const dockerfilePath: string | undefined = cfg.dockerfilePath
+      if (!dockerfilePath) throw new Error('dockerfilePath missing in project.config')
+      const imageTag = `shiply_project_${(ctx as any).projectId || 'app'}:latest`
+      await append(`[deploy] docker build -t ${imageTag} -f ${dockerfilePath} .\n`)
+      exit = await runCmd('docker', ['build', '-t', imageTag, '-f', dockerfilePath, '.'], workdirHost)
+      if (exit === 0) {
+        await append(`[deploy] docker run -d --rm --name ${imageTag.replace(/[:/]/g, '_')} ${imageTag}\n`)
+        // Note: paramètres à affiner selon projet
+        await runCmd('docker', ['run', '-d', '--rm', '--name', imageTag.replace(/[:/]/g, '_'), imageTag], workdirHost)
+      }
+    } else if (driver === 'command') {
+      const startCommand: string | undefined = cfg.startCommand
+      if (!startCommand) throw new Error('startCommand missing in project.config')
+      await append(`[deploy] ${startCommand}\n`)
+      // MVP: exécution au premier plan (pour demo). A terme: détaché/supervisé
+      const shellCmd: [string, string[]] = process.platform === 'win32'
+        ? ['cmd', ['/c', startCommand]]
+        : ['/bin/sh', ['-lc', startCommand]]
+      exit = await runCmd(shellCmd[0], shellCmd[1], workdirHost)
+    }
+
+    const canceled = await isRunCanceled(job.runId)
+    await api.post(`/jobs/${job.id}/finish`, {
+      status: canceled ? 'canceled' : exit === 0 ? 'success' : 'failed',
+      exitCode: exit,
+      logsLocation: null,
+      artifactsLocation: null,
+    })
+    return
   }
   const docker = await createDockerClient()
   const image = job.image || 'alpine:3.20'
@@ -148,15 +222,22 @@ async function execJob(job: any) {
       void flush()
     })
     await container.start()
+    const cancelInterval = setInterval(async () => {
+      if (await isRunCanceled(job.runId)) {
+        try { await container.stop({ t: 1 }) } catch {}
+      }
+    }, 500)
     const wait = await container.wait()
+    clearInterval(cancelInterval)
     if (flushTimer) {
       clearTimeout(flushTimer)
       flushTimer = null
     }
     await flush()
     const exitCode = wait.StatusCode ?? 1
+    const canceled = await isRunCanceled(job.runId)
     await api.post(`/jobs/${job.id}/finish`, {
-      status: exitCode === 0 ? 'success' : 'failed',
+      status: canceled ? 'canceled' : exitCode === 0 ? 'success' : 'failed',
       exitCode,
       logsLocation: null,
       artifactsLocation: null,
@@ -190,7 +271,7 @@ async function main() {
   // deno-lint-ignore no-constant-condition
   while (true) {
     try {
-      await heartbeat()
+      await heartbeat(0)
       const job = await claim()
       if (job) await execJob(job)
     } catch (e) {
