@@ -101,7 +101,9 @@ export default class JobsController {
     const rootPath: string = (cfg?.rootPath ?? '').toString().replace(/^\/+|\/+$/g, '')
     const workdirHost = rootPath ? path.resolve(projectPath, rootPath) : projectPath
     const workdirInContainer = rootPath ? `/workspace/${rootPath}` : '/workspace'
-    const envVars: Array<{ key: string; value: string }> = Array.isArray(cfg?.envVars) ? cfg.envVars : []
+    const envVars: Array<{ key: string; value: string }> = Array.isArray(cfg?.envVars)
+      ? cfg.envVars
+      : []
 
     return response.ok({
       data: {

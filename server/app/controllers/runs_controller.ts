@@ -137,7 +137,7 @@ export default class RunsController {
     return response.ok({ data: jobs })
   }
 
-  async deploy({ params, response, auth }: HttpContext) {
+  async deploy({ params, response }: HttpContext) {
     const runId = Number(params.id)
     const run = await PipelineRun.find(runId)
     if (!run) return response.notFound({ error: 'run not found' })
@@ -146,7 +146,8 @@ export default class RunsController {
 
     // charger config projet via relation pipeline -> project_id
     const projectId = (pipeline as any).projectId
-    const project = await (await import('#models/project')).default.find(projectId)
+    const { default: Project } = await import('#models/project')
+    const project = await Project.find(projectId)
     if (!project) return response.notFound({ error: 'project not found' })
     let cfg: any = (project as any).config
     try {
@@ -156,8 +157,17 @@ export default class RunsController {
     }
 
     // déterminer le driver
-    const runMode: string = cfg?.runMode || (cfg?.composePath ? 'compose' : cfg?.dockerfilePath ? 'dockerfile' : cfg?.startCommand ? 'command' : 'compose')
-    const driver = runMode === 'compose' ? 'compose' : runMode === 'dockerfile' ? 'dockerfile' : 'command'
+    const runMode: string =
+      cfg?.runMode ||
+      (cfg?.composePath
+        ? 'compose'
+        : cfg?.dockerfilePath
+          ? 'dockerfile'
+          : cfg?.startCommand
+            ? 'command'
+            : 'compose')
+    const driver =
+      runMode === 'compose' ? 'compose' : runMode === 'dockerfile' ? 'dockerfile' : 'command'
 
     // step_index suivant
     const last = await Job.query().where('run_id', run.id).orderBy('step_index', 'desc').first()
@@ -201,7 +211,10 @@ export default class RunsController {
     // Mettre à jour les runners affectés pour les remettre 'online' si plus rien ne tourne
     const { default: Runner } = await import('#models/runner')
     for (const rid of affectedRunnerIds) {
-      const count = await Job.query().where('runner_id', rid).where('status', 'running').count('* as total')
+      const count = await Job.query()
+        .where('runner_id', rid)
+        .where('status', 'running')
+        .count('* as total')
       const total = Number((count[0] as any)?.$extras?.total ?? 0)
       const runner = await Runner.find(rid)
       if (runner) {
