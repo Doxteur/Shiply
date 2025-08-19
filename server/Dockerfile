@@ -1,24 +1,32 @@
-FROM node:20-alpine AS builder
+FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN apk add --no-cache bash && corepack enable || true
-RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; else yarn install; fi
+# Installation des dépendances (Bun)
+COPY package.json ./
+# Copie opportuniste des lockfiles s'ils existent (permet un cache de build plus fiable)
+COPY bun.lockb* ./
+COPY yarn.lock* ./
+COPY package-lock.json* ./
+COPY pnpm-lock.yaml* ./
+RUN bun install --ci --no-progress
 
+# Sources
 COPY . .
 COPY .env.example .env.example
 
 # Si .env n'existe pas, on le crée à partir de .env.example
 RUN [ -f .env ] || cp .env.example .env
 
-RUN yarn build
+# Build de l'application (AdonisJS)
+RUN bun run build
 RUN cp .env build/.env
 
+# Préparer les dépendances de production dans le dossier build
 WORKDIR /app/build
-RUN if [ -f yarn.lock ]; then yarn install --production=true --frozen-lockfile; else yarn install --production=true; fi
+RUN bun install --ci --production --no-progress
 
-FROM node:20-alpine
+FROM oven/bun:1
 
 WORKDIR /app
 
@@ -26,4 +34,4 @@ COPY --from=builder /app/build ./
 
 EXPOSE 3333
 
-CMD ["node", "bin/server.js"]
+CMD ["bun", "bin/server.js"]
