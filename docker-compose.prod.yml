@@ -1,34 +1,38 @@
 services:
-  # Service API (AdonisJS)
   api:
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: template-nextgen-api
+    container_name: shiply-api-prod
     ports:
-      - "12000:3333"
+      - "12001:3333"
     env_file:
-      - ./server/.env
+      - ./server/.env.prod
     restart: unless-stopped
+    environment:
+      - NODE_ENV=production
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - app-network
 
-  # Reverse Proxy (Nginx) avec fichiers statiques
   nginx:
     build:
       context: .
       dockerfile: nginx.Dockerfile
-    container_name: template-nextgen-nginx
+    container_name: shiply-nginx-prod
     ports:
-      - "12001:80"
+      - "12002:80"
     restart: unless-stopped
     depends_on:
       - api
+    environment:
+      - NGINX_PORT=80
     networks:
       - app-network
 
 networks:
   app-network:
     driver: bridge
+
+
