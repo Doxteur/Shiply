@@ -32,7 +32,7 @@ export default defineConfig({
     () => import('@adonisjs/cors/cors_provider'),
     () => import('@adonisjs/lucid/database_provider'),
     () => import('@adonisjs/auth/auth_provider'),
-    () => import('@adonisjs/static/static_provider')
+    () => import('@adonisjs/static/static_provider'),
   ],
 
   /*
@@ -66,11 +66,18 @@ export default defineConfig({
         name: 'functional',
         timeout: 30000,
       },
+      {
+        files: ['tests/**/*.spec(.ts|.js)'],
+        name: 'api',
+        timeout: 30000,
+      },
     ],
     forceExit: false,
   },
-  metaFiles: [{
-    pattern: 'public/**',
-    reloadServer: false,
-  }]
+  metaFiles: [
+    {
+      pattern: 'public/**',
+      reloadServer: false,
+    },
+  ],
 })

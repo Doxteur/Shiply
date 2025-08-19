@@ -5,55 +5,41 @@ import { Contact } from '@/pages/Contact';
 import { RootLayout } from '@/components/core/layouts/RootLayout';
 import LoginForm from './components/services/auth/LoginForm';
 import { ProtectedRoute, PublicRoute } from '@/components/core/middlewares/AuthMiddleware';
+import Projects from '@/pages/Projects';
+import ProjectCreate from '@/pages/ProjectCreate';
+import ProjectCreateFinalize from '@/pages/ProjectCreateFinalize';
+import ProjectDetails from '@/pages/ProjectDetails';
+import ProjectRuns from '@/pages/ProjectRuns';
+import RunDetails from '@/pages/RunDetails';
 
 export const router = createBrowserRouter([
+  // Route publique (hors layout protégé)
+  {
+    path: '/login',
+    element: (
+      <PublicRoute>
+        <LoginForm />
+      </PublicRoute>
+    ),
+  },
+  // Espace applicatif protégé
   {
     path: '/',
+    element: (
+      <ProtectedRoute>
+        <RootLayout />
+      </ProtectedRoute>
+    ),
     children: [
-      {
-        path: '/',
-        element: (
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/login',
-        element: (
-          <PublicRoute>
-            <LoginForm />
-          </PublicRoute>
-        ),
-      },
-      {
-        path: '/about',
-        element: (
-          <ProtectedRoute>
-            <RootLayout />
-          </ProtectedRoute>
-        ),
-        children: [
-          {
-            path: '/about',
-            element: <About />,
-          },
-        ],
-      },
-      {
-        path: '/contact',
-        element: (
-          <ProtectedRoute>
-            <RootLayout />
-          </ProtectedRoute>
-        ),
-        children: [
-          {
-            path: '/contact',
-            element: <Contact />,
-          },
-        ],
-      },
+      { path: '/', element: <Home /> },
+      { path: '/projects', element: <Projects /> },
+      { path: '/projects/new', element: <ProjectCreate /> },
+      { path: '/projects/new/finalize', element: <ProjectCreateFinalize /> },
+      { path: '/projects/:id', element: <ProjectDetails /> },
+      { path: '/projects/:id/runs', element: <ProjectRuns /> },
+      { path: '/runs/:id', element: <RunDetails /> },
+      { path: '/about', element: <About /> },
+      { path: '/contact', element: <Contact /> },
     ],
   },
 ]);

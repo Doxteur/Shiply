@@ -2,9 +2,15 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import authReducer from './features/auth/authSlice';
+import projectsReducer from './features/projects/projectsSlice';
+import pipelinesReducer from './features/pipelines/pipelinesSlice';
+import runsReducer from './features/runs/runsSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
+  projects: projectsReducer,
+  pipelines: pipelinesReducer,
+  runs: runsReducer,
 });
 
 const persistConfig = {

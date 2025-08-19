@@ -36,6 +36,13 @@
       ],
       "env": ["NODE_ENV", "PORT", "VITE_*"]
     },
+    "install": {
+      "cache": false,
+      "persistent": false,
+      "inputs": ["package.json", "bun.lock"],
+      "outputs": [],
+      "env": ["NODE_ENV"]
+    },
     "lint": {
       "dependsOn": ["^build"],
       "inputs": [

@@ -1,4 +1,7 @@
 # bhvr/.gitignore
+#Cursor conf
+.cursor/rules/*
+
 # dependencies
 node_modules
 .pnp
@@ -40,3 +43,8 @@ pnpm-debug.log*
 # Bun
 bun.lockb
 .turbo
+
+# Shiply logs
+server/storage/logs/**/*.log
+
+deploy/
