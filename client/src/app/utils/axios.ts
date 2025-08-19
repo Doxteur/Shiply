@@ -44,13 +44,13 @@ axiosInstance.interceptors.request.use(
 		// Debug request
 		if (shouldDebug()) {
 			const id = generateRequestId();
-			(config as any).metadata = { id, startTime: Date.now() };
+			(config as unknown as { metadata?: { id?: string; startTime?: number } }).metadata = { id, startTime: Date.now() };
 			const method = (config.method || 'get').toUpperCase();
 			const url = `${config.baseURL ?? ''}${config.url ?? ''}`;
 			// eslint-disable-next-line no-console
 			console.groupCollapsed(`%cHTTP ➜ ${method} ${url} [${id}]`, 'color:#0ea5e9');
 			// eslint-disable-next-line no-console
-			console.log('Headers', maskSensitiveHeaders(config.headers as any));
+			console.log('Headers', maskSensitiveHeaders(config.headers as unknown as Record<string, unknown>));
 			if (config.params) {
 				// eslint-disable-next-line no-console
 				console.log('Params', config.params);
@@ -73,7 +73,7 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
 		if (shouldDebug()) {
-			const meta = (response.config as any).metadata as { id?: string; startTime?: number } | undefined;
+			const meta = (response.config as unknown as { metadata?: { id?: string; startTime?: number } }).metadata as { id?: string; startTime?: number } | undefined;
 			const id = meta?.id ?? 'n/a';
 			const start = meta?.startTime ?? Date.now();
 			const duration = Date.now() - start;
@@ -97,24 +97,23 @@ axiosInstance.interceptors.response.use(
     }
     if (shouldDebug()) {
       const cfg = error.config || {};
-      const meta = (cfg as any).metadata as { id?: string; startTime?: number } | undefined;
+      const meta = (cfg as unknown as { metadata?: { id?: string; startTime?: number } }).metadata as { id?: string; startTime?: number } | undefined;
       const id = meta?.id ?? 'n/a';
       const start = meta?.startTime ?? Date.now();
       const duration = Date.now() - start;
-      const method = ((cfg as any).method || 'get').toUpperCase();
-      const url = `${(cfg as any).baseURL ?? ''}${(cfg as any).url ?? ''}`;
+      const method = ((cfg as unknown as { method?: string }).method || 'get').toUpperCase();
+      const url = `${(cfg as unknown as { baseURL?: string }).baseURL ?? ''}${(cfg as unknown as { url?: string }).url ?? ''}`;
       const status = error.response?.status ?? 'ERR';
       // eslint-disable-next-line no-console
       console.groupCollapsed(`%cHTTP ✖ ${method} ${url} [${id}] ${status} (${duration}ms)`, 'color:#ef4444');
       // eslint-disable-next-line no-console
-      console.log('Request headers', maskSensitiveHeaders(cfg.headers as any));
-      if ((cfg as any).params) {
+      if ((cfg as unknown as { params?: unknown }).params) {
         // eslint-disable-next-line no-console
-        console.log('Params', (cfg as any).params);
+        console.log('Params', (cfg as unknown as { params?: unknown }).params);
       }
-      if ((cfg as any).data !== undefined) {
+      if ((cfg as unknown as { data?: unknown }).data !== undefined) {
         // eslint-disable-next-line no-console
-        console.log('Body', (cfg as any).data);
+        console.log('Body', (cfg as unknown as { data?: unknown }).data);
       }
       if (error.response) {
         // eslint-disable-next-line no-console
