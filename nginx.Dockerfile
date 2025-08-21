@@ -12,9 +12,6 @@ RUN bun install
 # Copier le code source du client
 COPY client/ .
 
-# Copier les types partagés utilisés par le client (aliases @shared/*)
-COPY shared/ /app/shared
-
 # Builder l'application React
 RUN bun run build
 
