@@ -6,7 +6,7 @@
 | The routes file is used for defining the HTTP routes.
 |
 */
-import router from '@adonisjs/core/services/router'
+import * as RouterSvc from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 
 const AuthController = () => import('#controllers/auth_controller')
@@ -19,6 +19,14 @@ const MetricsController = () => import('#controllers/metrics_controller')
 const JobLogsController = () => import('#controllers/job_logs_controller')
 const GithubIntegrationsController = () => import('#controllers/github_integrations_controller')
 
+// Compat Node/Bun: certains environnements exposent le service via default export
+const router: any = (RouterSvc as any).default ?? (RouterSvc as any)
+
+router.get('/', async () => {
+  return {
+    message: 'Hello World',
+  }
+})
 router.group(() => {
   //test
   router.get('/test', () => {

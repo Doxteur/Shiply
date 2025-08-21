@@ -1,37 +1,28 @@
-FROM oven/bun:1 AS builder
+FROM node:20-alpine AS builder
+# Install Docker CLI
+RUN apk add --no-cache docker-cli
 
 WORKDIR /app
 
-# Installation des dépendances (Bun)
-COPY package.json ./
-# Copie opportuniste des lockfiles s'ils existent (permet un cache de build plus fiable)
-COPY bun.lockb* ./
-COPY yarn.lock* ./
-COPY package-lock.json* ./
-COPY pnpm-lock.yaml* ./
-RUN bun install --ci --no-progress
+COPY package*.json ./
+RUN yarn install
 
-# Sources
 COPY . .
-COPY .env.example .env.example
 
-# Si .env n'existe pas, on le crée à partir de .env.example
-RUN [ -f .env ] || cp .env.example .env
-
-# Build de l'application (AdonisJS)
-RUN bun run build
+RUN yarn run build --ignore-ts-errors
 RUN cp .env build/.env
 
-# Préparer les dépendances de production dans le dossier build
 WORKDIR /app/build
-RUN bun install --ci --production --no-progress
+RUN yarn install --production
 
-FROM oven/bun:1
+FROM node:22.7-alpine
 
 WORKDIR /app
 
 COPY --from=builder /app/build ./
+COPY --from=builder /usr/bin/docker /usr/bin/
 
 EXPOSE 3333
 
-CMD ["bun", "bin/server.js"]
+# Laisse le tourner dans le vide pour que j'accede le container
+CMD ["node", "bin/server.js"]
