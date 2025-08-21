@@ -92,7 +92,7 @@ const pipelinesSlice = createSlice({
       .addCase(syncPipelineFromRepo.fulfilled, (state, action: PayloadAction<Pipeline>) => {
         const pid = action.payload.projectId
         const list = state.byProjectId[pid] ?? []
-        const idx = list.findIndex((p) => p.id === action.payload.id)
+        const idx = list.findIndex((p: Pipeline) => p.id === action.payload.id)
         if (idx >= 0) {
           list[idx] = action.payload
           state.byProjectId[pid] = [...list]

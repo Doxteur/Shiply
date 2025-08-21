@@ -101,7 +101,7 @@ const projectsSlice = createSlice({
         state.error = action.payload ?? 'create failed'
       })
       .addCase(deleteProject.fulfilled, (state, action: PayloadAction<number>) => {
-        state.items = state.items.filter((p) => p.id !== action.payload)
+        state.items = state.items.filter((p: Project) => p.id !== action.payload)
       })
       .addCase(deleteProject.rejected, (state, action) => {
         state.error = action.payload ?? 'delete failed'
