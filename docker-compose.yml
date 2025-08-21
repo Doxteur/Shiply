@@ -10,6 +10,9 @@ services:
     env_file:
       - ./server/.env
     restart: unless-stopped
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3333
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
@@ -22,7 +25,7 @@ services:
       dockerfile: nginx.Dockerfile
     container_name: template-nextgen-nginx
     ports:
-      - "12001:80"
+      - "12002:80"
     restart: unless-stopped
     depends_on:
       - api
