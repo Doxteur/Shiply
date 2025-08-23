@@ -32,6 +32,7 @@ export default function ProjectCreate() {
       const { data } = await axiosInstance.get<{ url: string }>(
         '/integrations/github/authorize'
       )
+      console.log('handleGithubConnect', data)
       const w = window.open(
         data.url,
         'gh_oauth',

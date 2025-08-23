@@ -5,7 +5,7 @@ import type { Readable } from 'node:stream'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const API_URL = process.env.API_URL || 'http://localhost:3333'
+const API_URL = process.env.API_URL || 'http://api:3333'
 const api = axios.create({ baseURL: API_URL, timeout: 3000 })
 const RUNNER_NAME = process.env.RUNNER_NAME || `runner-${Math.random().toString(36).slice(2, 8)}`
 
