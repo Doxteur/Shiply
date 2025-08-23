@@ -4,6 +4,8 @@
   "author": "Steve Simkins",
   "devDependencies": {
     "bun-types": "latest",
+    "conventional-changelog-angular": "^8.0.0",
+    "conventional-changelog-cli": "^5.0.0",
     "turbo": "^2.5.5"
   },
   "peerDependencies": {
