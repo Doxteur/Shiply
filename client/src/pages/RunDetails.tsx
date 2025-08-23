@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, ListTree, Logs, TerminalSquare } from 'lucide-react'
+import { REACT_APP_API_URL } from '@/app/utils/config'
 import axiosInstance from '@/app/utils/axios'
 
 export default function RunDetails() {
@@ -51,7 +52,7 @@ export default function RunDetails() {
     }
     setLogs('')
     if (!selectedJobId) return
-    const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3333'
+    const base = REACT_APP_API_URL
     const url = `${base}/jobs/${selectedJobId}/logs/stream?ts=${Date.now()}`
 
     // Précharger l'existant pour éviter un écran vide si le flux tarde
@@ -88,7 +89,7 @@ export default function RunDetails() {
   useEffect(() => {
     const isActive = !run || run.status === 'queued' || run.status === 'running'
     if (!selectedJobId || !isActive) return
-    const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3333'
+    const base = REACT_APP_API_URL
     const interval = window.setInterval(async () => {
       try {
         const res = await fetch(`${base}/jobs/${selectedJobId}/logs`)

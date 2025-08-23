@@ -1,5 +1,5 @@
 services:
-  api:
+  api-staging:
     build:
       context: ./server
       dockerfile: Dockerfile
@@ -9,12 +9,17 @@ services:
     env_file:
       - ./server/.env.staging
     restart: unless-stopped
+    environment:
+      - WORKSPACE_DIR=${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}:${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}
     networks:
-      - app-network
+      app-network:
+        aliases:
+          - api
 
-  nginx:
+  nginx-staging:
     build:
       context: .
       dockerfile: nginx.Dockerfile
@@ -23,7 +28,25 @@ services:
       - "4445:80"
     restart: unless-stopped
     depends_on:
-      - api
+      - api-staging
+    networks:
+      - app-network
+
+  runner-staging:
+    image: oven/bun:1-alpine
+    container_name: template-nextgen-runner-staging
+    working_dir: /app
+    command: sh -lc "apk add --no-cache docker-cli docker-cli-compose && bun run src/index.ts"
+    environment:
+      - API_URL=http://api-staging:3333
+      - RUNNER_NAME=runner-staging
+    volumes:
+      - ./runner:/app:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}:${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}
+    depends_on:
+      - api-staging
+    restart: unless-stopped
     networks:
       - app-network
 

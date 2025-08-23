@@ -1,10 +1,10 @@
 services:
   # Service API (AdonisJS)
-  api:
+  shiply-api-dev:
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: template-nextgen-api
+    container_name: shiply-api-dev
     ports:
       - "12000:3333"
     env_file:
@@ -13,22 +13,44 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=3333
+      - WORKSPACE_DIR=${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}:${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}
     networks:
-      - app-network
+      app-network:
+        aliases:
+          - api
 
   # Reverse Proxy (Nginx) avec fichiers statiques
-  nginx:
+  nginx-dev:
     build:
       context: .
       dockerfile: nginx.Dockerfile
-    container_name: template-nextgen-nginx
+    container_name: shiply-nginx-dev
     ports:
       - "12002:80"
     restart: unless-stopped
     depends_on:
-      - api
+      - shiply-api-dev
+    networks:
+      - app-network
+
+  runner-dev:
+    image: oven/bun:1-alpine
+    container_name: shiply-runner-dev
+    working_dir: /app
+    command: sh -lc "apk add --no-cache docker-cli docker-cli-compose && bun run src/index.ts"
+    environment:
+      - API_URL=http://shiply-api-dev:3333
+      - RUNNER_NAME=runner-dev
+    volumes:
+      - ./runner:/app:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}:${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}
+    depends_on:
+      - shiply-api-dev
+    restart: unless-stopped
     networks:
       - app-network
 

@@ -19,6 +19,9 @@ FROM node:22.7-alpine
 
 WORKDIR /app
 
+# Git requis à l'exécution pour cloner les dépôts dans le workspace
+RUN apk add --no-cache git openssh-client ca-certificates
+
 COPY --from=builder /app/build ./
 COPY --from=builder /usr/bin/docker /usr/bin/
 
