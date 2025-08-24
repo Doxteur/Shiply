@@ -99,7 +99,7 @@ function LoginForm() {
                 Connexion
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-2">
-                Connectez-vous à votre compte Shiply !
+                Connectez-vous !
               </p>
             </motion.div>
           </CardHeader>
