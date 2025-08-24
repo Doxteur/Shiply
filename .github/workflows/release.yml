@@ -97,6 +97,6 @@ jobs:
             git remote set-url origin git@github.com:Doxteur/Shiply.git &&
             git pull &&
             docker compose -f docker-compose.prod.yml pull &&
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans --build
           '
 
