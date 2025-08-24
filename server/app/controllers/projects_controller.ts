@@ -83,7 +83,9 @@ export default class ProjectsController {
     if (updated && typeof (updated as any).config === 'string') {
       try {
         ;(updated as any).config = JSON.parse((updated as any).config)
-      } catch {}
+      } catch (e) {
+        console.error(e)
+      }
     }
     // Si repoFullName est défini, on matérialise le repo dans le workspace
     try {

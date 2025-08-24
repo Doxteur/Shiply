@@ -45,7 +45,7 @@ services:
       - API_URL=http://shiply-api-dev:3333
       - RUNNER_NAME=runner-dev
     volumes:
-      - ./runner:/app:ro
+      - ./runner:/app
       - /var/run/docker.sock:/var/run/docker.sock
       - ${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}:${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}
     depends_on:
