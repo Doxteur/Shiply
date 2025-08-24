@@ -28,7 +28,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args: >
-            -Dsonar.projectKey=shiply
+            -Dsonar.projectKey=Shiply
             -Dsonar.projectName=Shiply
 
   docker:
