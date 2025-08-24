@@ -63,7 +63,7 @@ function Sidebar() {
 						<div className="h-4 w-4 rounded-sm bg-primary" />
 					</div>
 					<h1 className="text-lg font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-						Cloud PaaS
+						Shiply
 					</h1>
 				</motion.div>
 			) : (
