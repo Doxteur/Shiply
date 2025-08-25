@@ -1,8 +1,7 @@
 services:
   api-prod:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
+    image: doxteurn/shiply-api:latest
+    pull_policy: always
     container_name: shiply-api-prod
     ports:
       - "12001:3333"
@@ -23,9 +22,8 @@ services:
           - api
 
   nginx-prod:
-    build:
-      context: .
-      dockerfile: nginx.Dockerfile
+    image: doxteurn/shiply-nginx:latest
+    pull_policy: always
     container_name: shiply-nginx-prod
     ports:
       - "12002:80"

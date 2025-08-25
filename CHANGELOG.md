@@ -1,3 +1,7 @@
+# [0.4.0](https://github.com/Doxteur/Shiply/compare/v0.4.1...v0.4.0) (2025-08-25)
+
+
+
 ## 0.4.0 (2025-08-19)
 
 ### Features

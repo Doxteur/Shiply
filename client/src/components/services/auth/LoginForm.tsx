@@ -99,7 +99,7 @@ function LoginForm() {
                 Connexion
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-2">
-                Connectez-vous !
+                Connectez-vous à votre compte !!
               </p>
             </motion.div>
           </CardHeader>
