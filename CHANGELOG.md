@@ -1,3 +1,12 @@
+# [0.4.0](https://github.com/Doxteur/Shiply/compare/v0.5.0...v0.4.0) (2025-08-25)
+
+
+### Features
+
+* **frontend:** add Landing Hero page and public route ([62de2af](https://github.com/Doxteur/Shiply/commit/62de2afd1324e93d08bf862bb769f13ee54e3be0))
+
+
+
 # [0.4.0](https://github.com/Doxteur/Shiply/compare/v0.4.1...v0.4.0) (2025-08-25)
 
 
