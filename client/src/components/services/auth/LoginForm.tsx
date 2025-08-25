@@ -99,11 +99,7 @@ function LoginForm() {
                 Connexion
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-2">
-<<<<<<< Updated upstream
-                Connectez-vous à votre compte
-=======
-                Connectez-vous à votre compte!
->>>>>>> Stashed changes
+                Connectez-vous à votre compte !!
               </p>
             </motion.div>
           </CardHeader>

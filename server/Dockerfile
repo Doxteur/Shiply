@@ -10,7 +10,7 @@ RUN yarn install
 COPY . .
 
 RUN yarn run build --ignore-ts-errors
-RUN cp .env build/.env
+RUN [ -f .env ] && cp .env build/.env || true
 
 WORKDIR /app/build
 RUN yarn install --production
