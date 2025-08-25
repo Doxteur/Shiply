@@ -1,4 +1,5 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
+import { useSelector } from 'react-redux';
 import Home from '@/pages/Home';
 import { About } from '@/pages/About';
 import { Contact } from '@/pages/Contact';
@@ -11,14 +12,37 @@ import ProjectCreateFinalize from '@/pages/ProjectCreateFinalize';
 import ProjectDetails from '@/pages/ProjectDetails';
 import ProjectRuns from '@/pages/ProjectRuns';
 import RunDetails from '@/pages/RunDetails';
+import Landing from '@/pages/Landing';
+import RegisterForm from './components/services/auth/RegisterForm';
+import type { RootState } from '@/app/store';
+
+const LandingOrRedirect = () => {
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  if (isAuthenticated) {
+    return <Navigate to="/projects" replace />;
+  }
+  return <Landing />;
+};
 
 export const router = createBrowserRouter([
   // Route publique (hors layout protégé)
+  {
+    path: '/',
+    element: <LandingOrRedirect />,
+  },
   {
     path: '/login',
     element: (
       <PublicRoute>
         <LoginForm />
+      </PublicRoute>
+    ),
+  },
+  {
+    path: '/register',
+    element: (
+      <PublicRoute>
+        <RegisterForm />
       </PublicRoute>
     ),
   },

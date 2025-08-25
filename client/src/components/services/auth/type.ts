@@ -65,10 +65,9 @@ export interface LoginCredentials {
 }
 
 export interface RegisterCredentials {
-  name: string;
+  fullName: string;
   email: string;
   password: string;
-  password_confirmation: string;
 }
 
 // Types pour les props des composants
