@@ -31,9 +31,50 @@ jobs:
             -Dsonar.projectKey=Shiply
             -Dsonar.projectName=Shiply
 
+  test:
+    name: API tests (Bun)
+    needs: [sonar]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies (workspace)
+        run: bun install
+      - name: Create test env file
+        working-directory: server
+        run: |
+          cat > .env << 'EOF'
+          TZ=UTC
+          PORT=3333
+          HOST=127.0.0.1
+          LOG_LEVEL=info
+          APP_NAME=shiply
+          APP_KEY=uUR_gG7cmFO8W4aEuDkT7i2gpwrgLQBA
+          NODE_ENV=test
+          DB_HOST=shiply.fr
+          DB_PORT=4157
+          DB_USER=shiply_test
+          DB_PASSWORD=375LI2w5FGmY
+          DB_DATABASE=shiply_test
+          GITHUB_CLIENT_ID=
+          GITHUB_CLIENT_SECRET=
+          GITHUB_CALLBACK_URL=
+          EOF
+      - name: Run DB migrations (fresh)
+        working-directory: server
+        run: node ace migration:fresh --seed
+      - name: Run API tests
+        working-directory: server
+        run: bun run test
+
   docker:
     name: Build and push Docker images
-    needs: [sonar]
+    needs: [sonar, test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
