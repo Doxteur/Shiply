@@ -56,7 +56,7 @@ jobs:
           APP_NAME=shiply
           APP_KEY=uUR_gG7cmFO8W4aEuDkT7i2gpwrgLQBA
           NODE_ENV=test
-          DB_HOST=shiply.fr
+          DB_HOST=sleendb.fr
           DB_PORT=4157
           DB_USER=shiply_test
           DB_PASSWORD=375LI2w5FGmY
