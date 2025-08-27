@@ -149,8 +149,8 @@ function Sidebar() {
 					<AnimatePresence>
 						{!isCollapsed && (
 							<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-w-0 flex-1">
-								<div className="truncate text-sm font-medium">Leslie Alexander</div>
-								<div className="truncate text-xs text-muted-foreground">leslie@gmail.com</div>
+								<div className="truncate text-sm font-medium">Admin</div>
+								<div className="truncate text-xs text-muted-foreground">admin@admin.com</div>
 							</motion.div>
 						)}
 					</AnimatePresence>

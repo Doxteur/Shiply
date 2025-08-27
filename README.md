@@ -1,247 +1,115 @@
-# RABV 🚀
+![Aperçu Shiply](https://ibb.co/8449HdQh)
 
-![cover](https://i.ibb.co/27BDCTzV/image.png)
+## Shiply — CI/CD Manager (MVP)
 
-Une stack full-stack TypeScript moderne avec authentification JWT, utilisant **R**eact, **A**donisJS, **B**un et **V**ite.
+Shiply est une application auto‑hébergeable pour créer, exécuter et suivre des pipelines (build, tests, qualité, sécurité, déploiement) avec des runners Docker et un orchestrateur de déploiement interne (Shiply Deploy Manager).
 
-## ✨ Fonctionnalités
+### Stack
+- Frontend: React + Vite + TypeScript + Tailwind
+- API: AdonisJS (TypeScript) + MySQL
+- Runner: Bun + Docker
+- Proxy: Nginx (sert le frontend et proxifie l’API en `/api`)
 
-- **🔐 Authentification JWT complète** avec hashage des mots de passe
-- **🛡️ Routes protégées** avec middleware Bearer Auth
-- **📊 Base de données** avec AdonisJS Lucid ORM et MySQL
-- **🎨 Interface moderne** avec Framer Motion et Tailwind CSS
-- **🔄 État global** avec Redux Toolkit
-- **📱 Responsive Design** avec animations fluides
-- **🔒 Sécurité** : Tokens JWT, hashage bcrypt, autorisation par utilisateur
+## Démarrage rapide (Docker)
+Prérequis: Docker Desktop ou équivalent.
 
-## 🏗️ Architecture
-
-```
-RABV/
-├── client/               # React frontend avec Redux
-├── server/               # AdonisJS backend avec JWT
-├── shared/               # Types TypeScript partagés
-└── database/             # Migrations et seeders AdonisJS
+0) Créer un fichier `.env` à la racine (lu automatiquement par Docker Compose):
+```env
+# Emplacement du workspace monté par l'API et le runner
+# Utilisez un chemin relatif pour rester portable
+HOST_WORKSPACE_DIR=./workspace
+ex windows: HOST_WORKSPACE_DIR=/run/desktop/mnt/host/d/Dev/Perso/deploy
 ```
 
-## 🚀 Démarrage rapide
+1) Créer le fichier d’environnement API `server/.env` (exemple minimal):
+```env
+NODE_ENV=development
+HOST=0.0.0.0
+PORT=3333
+APP_NAME=Shiply
+APP_KEY=changeme_via_generate_key
 
-### Prérequis
-- [Bun](https://bun.sh) installé
-- MySQL en cours d'exécution
+# Base de données MySQL
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=example
+DB_DATABASE=shiply
 
-### Installation
+```
 
+3) Lancer Shiply (proxy + API + runner):
 ```bash
-# Cloner le projet
-git clone <votre-repo>
-cd RABV
+docker compose up -d --build
+```
 
-# Installer les dépendances
+4) Initialiser la base (dans le conteneur API):
+```bash
+docker exec -it shiply-api-dev node ace migration:fresh --seed
+```
+
+5) Ouvrir l’application:
+- UI: `http://localhost:12002`
+- API: `http://localhost:12000` (proxifiée en `/api` via Nginx sur `12002`)
+
+Notes:
+- L’API lit `server/.env`. L’APP_KEY peut être générée avec `node ace generate:key` dans le conteneur API, puis copiée dans `.env`.
+- Le runner s’exécute dans `runner-dev` et parle au démon Docker via `docker.sock`.
+
+## Développement local (sans Docker)
+Prérequis: Bun (monorepo), Node.js, Docker (pour le runner), MySQL.
+
+1) Installer les dépendances à la racine:
+```bash
 bun install
+```
 
-# Configurer la base de données
+2) Préparer l’API:
+```bash
+cp server/.env server/.env.local  # ou créer manuellement selon l’exemple ci-dessus
 cd server
-cp .env.example .env
-# Éditer .env avec vos paramètres de base de données
-
-# Appliquer les migrations
-bun ace migration:run
-
-# Exécuter les seeders (optionnel)
-bun ace db:seed
-```
-
-### Développement
-
-```bash
-# Démarrer tous les services
+node ace generate:key  # copier APP_KEY dans votre .env
+node ace migration:run && node ace db:seed
 bun run dev
-
-# Ou individuellement
-bun run dev:client    # Frontend React (port 5173)
-bun run dev:server    # Backend AdonisJS (port 3333)
 ```
 
-## 🔐 API Authentication
-
-### Créer un compte
+3) Démarrer le frontend:
 ```bash
-curl -X POST http://localhost:3333/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "fullName": "John Doe",
-    "password": "password123"
-  }'
+cd client
+npm run dev  # ou bun run dev
 ```
 
-### Se connecter
+4) Démarrer le runner (accès Docker requis):
 ```bash
-curl -X POST http://localhost:3333/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "password123"
-  }'
+cd runner
+bun run dev
 ```
 
-### Routes protégées
+## Scripts utiles (racine)
 ```bash
-# Récupérer le profil (nécessite un token)
-curl -X GET http://localhost:3333/api/auth/profile \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-
-# Créer un post (nécessite un token)
-curl -X POST http://localhost:3333/api/posts \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Mon premier post",
-    "content": "Contenu du post"
-  }'
+bun run dev            # dev monorepo (turbo)
+bun run dev:client     # frontend seul
+bun run dev:server     # API seule
+bun run dev:runner     # API + runner
+bun run build          # build monorepo
 ```
 
-## 📁 Structure du projet
+## Structure du dépôt (mono‑repo)
+- `client/`: UI React (Vite, Tailwind)
+- `server/`: API AdonisJS (auth, projets, pipelines, runs, runners)
+- `runner/`: exécution des jobs dans des conteneurs Docker
+- `shared/`: types partagés TypeScript
 
-### Frontend (client/)
-```
-client/src/
-├── app/
-│   ├── hooks/redux.ts      # Hooks Redux personnalisés
-│   ├── reducers/           # Reducers Redux
-│   └── store.ts           # Configuration du store
-├── components/
-│   ├── core/Layout.tsx    # Layout principal
-│   └── ui/                # Composants UI (shadcn/ui)
-├── pages/
-│   ├── HomePage.tsx       # Page d'accueil
-│   └── LoginPage.tsx      # Page de connexion
-└── router.tsx             # Configuration des routes
-```
+## Fonctionnalités (MVP)
+- Projets, pipelines YAML, exécutions, logs temps réel (SSE)
+- Runners Docker (claim, exécution step‑par‑step)
+- Déploiement via Shiply Deploy Manager (compose/dockerfile/command)
 
-### Backend (server/)
-```
-server/app/
-├── controllers/
-│   └── auth_controller.ts  # Authentification JWT
-├── middleware/
-│   └── auth_middleware.ts  # Middleware JWT
-├── models/
-│   └── user.ts            # Modèle User avec Lucid
-├── validators/
-│   └── auth.ts            # Validation des données
-└── start/
-    └── routes.ts          # Configuration des routes
-```
+## Dépannage rapide
+- API ne démarre pas: vérifier `server/.env` (hôte/port MySQL, `APP_KEY`).
+- 500 DB: exécuter les migrations/seed, vérifier que MySQL est joignable.
+- Runner: vérifier l’accès Docker (montage de `/var/run/docker.sock` ou Docker Desktop actif).
 
-### Base de données (AdonisJS Lucid)
-```typescript
-// Modèle User (app/models/user.ts)
-export default class User extends compose(BaseModel, AuthFinder) {
-  @column({ isPrimary: true })
-  declare id: number
+---
+Licence: MIT
 
-  @column()
-  declare fullName: string | null
-
-  @column()
-  declare email: string
-
-  @column({ serializeAs: null })
-  declare password: string
-
-  @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime
-
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
-
-  static accessTokens = DbAccessTokensProvider.forModel(User)
-}
-```
-
-## 🛡️ Sécurité
-
-- **JWT Tokens** : Expiration de 24h
-- **Hashage des mots de passe** : Bcrypt avec configuration sécurisée
-- **Routes protégées** : Middleware Bearer Auth automatique
-- **Autorisation** : Vérification de propriété pour les opérations CRUD
-- **Validation** : Vérification des données d'entrée
-
-## 🎨 Interface utilisateur
-
-- **Design moderne** avec Tailwind CSS
-- **Animations fluides** avec Framer Motion
-- **Composants réutilisables** avec shadcn/ui
-- **Responsive** pour tous les appareils
-- **Thème sombre/clair** supporté
-
-## 📦 Technologies utilisées
-
-### Frontend
-- **React 18** avec TypeScript
-- **Vite** pour le bundling
-- **Redux Toolkit** pour l'état global
-- **React Router** pour la navigation
-- **Framer Motion** pour les animations
-- **Tailwind CSS** pour le styling
-- **shadcn/ui** pour les composants
-
-### Backend
-- **AdonisJS** framework web
-- **Lucid ORM** pour la base de données
-- **MySQL** base de données
-- **JWT** authentification
-- **Bcrypt** hashage des mots de passe
-
-### Outils
-- **Bun** runtime et package manager
-- **Turbo** orchestration monorepo
-- **TypeScript** end-to-end
-
-## 🚀 Déploiement
-
-Voir `docs/shiply-deploy-manager.md` — Shiply intègre un orchestrateur de déploiement interne (pas de Coolify).
-
-## 📝 Scripts disponibles
-
-```bash
-# Développement
-bun run dev              # Démarrer tous les services
-bun run dev:client       # Frontend uniquement
-bun run dev:server       # Backend uniquement
-
-# Build
-bun run build            # Build complet
-bun run build:client     # Build frontend
-bun run build:server     # Build backend
-
-# Base de données
-bun run db:generate      # Générer le client Prisma
-bun run db:push          # Appliquer les migrations
-bun run db:studio        # Ouvrir Prisma Studio
-
-# Linting et tests
-bun run lint             # Linter tous les packages
-bun run type-check       # Vérification des types
-```
-
-## 🤝 Contribution
-
-1. Fork le projet
-2. Créer une branche feature (`git checkout -b feature/AmazingFeature`)
-3. Commit les changements (`git commit -m 'Add some AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrir une Pull Request
-
-## 📄 Licence
-
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
-
-## 🙏 Remerciements
-
-- [AdonisJS](https://adonisjs.com) pour le framework backend
-- [shadcn/ui](https://ui.shadcn.com) pour les composants UI
-- [Framer Motion](https://www.framer.com/motion/) pour les animations
-- [Lucid ORM](https://docs.adonisjs.com/guides/models/introduction) pour l'ORM
