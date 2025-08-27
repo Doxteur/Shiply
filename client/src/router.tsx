@@ -19,7 +19,7 @@ import type { RootState } from '@/app/store';
 const LandingOrRedirect = () => {
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   if (isAuthenticated) {
-    return <Navigate to="/projects" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   return <Landing />;
 };
@@ -55,7 +55,7 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { path: '/', element: <Home /> },
+      { path: '/dashboard', element: <Home /> },
       { path: '/projects', element: <Projects /> },
       { path: '/projects/new', element: <ProjectCreate /> },
       { path: '/projects/new/finalize', element: <ProjectCreateFinalize /> },
