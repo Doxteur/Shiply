@@ -1,4 +1,4 @@
-![Aperçu Shiply](https://ibb.co/8449HdQh)
+![Aperçu Shiply](https://i.ibb.co/vvvkSQMt/chrome-OZDL2-ALmo-A.png)
 
 ## Shiply — CI/CD Manager (MVP)
 
