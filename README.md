@@ -1,6 +1,20 @@
 ![Aperçu Shiply](https://i.ibb.co/vvvkSQMt/chrome-OZDL2-ALmo-A.png)
 
-## Shiply — CI/CD Manager (MVP)
+# Note examinateur
+La documentation du projet est disponible dans le dossier `docs`, le readme est présent uniquement pour le démarrage rapide.
+
+## Démarrage rapide
+Normalement un zip a été fournie, donc j'ai préconfigurer le projet pour qu'il fonctionne directement.
+Il suffit de lancer la commande suivante:
+- docker compose up -d --build
+
+Compte de connexion:
+- email: admin@admin.com
+- password: password
+
+Si vous avez un problème, vous pouvez me contacter à jimmydoussain@gmail.com.
+
+# Shiply — CI/CD Manager (MVP)
 
 Shiply est une application auto‑hébergeable pour créer, exécuter et suivre des pipelines (build, tests, qualité, sécurité, déploiement) avec des runners Docker et un orchestrateur de déploiement interne (Shiply Deploy Manager).
 
