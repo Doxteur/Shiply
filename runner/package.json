@@ -13,8 +13,7 @@
     "dockerode": "^4.0.2"
   },
   "devDependencies": {
-    "@types/dockerode": "^3.3.25",
-    "server": "workspace:*"
+    "@types/dockerode": "^3.3.25"
   }
 }
 

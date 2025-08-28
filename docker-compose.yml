@@ -37,15 +37,16 @@ services:
       - app-network
 
   runner-dev:
-    image: oven/bun:1-alpine
+    build:
+      context: ./runner
+      dockerfile: Dockerfile
+    image: shiply-runner:dev
     container_name: shiply-runner-dev
     working_dir: /app
-    command: sh -lc "apk add --no-cache docker-cli docker-cli-compose && bun run src/index.ts"
     environment:
       - API_URL=http://shiply-api-dev:3333
       - RUNNER_NAME=runner-dev
     volumes:
-      - ./runner:/app
       - /var/run/docker.sock:/var/run/docker.sock
       - ${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}:${HOST_WORKSPACE_DIR:-/var/lib/shiply/workspace}
     depends_on:

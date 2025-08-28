@@ -1,19 +1,5 @@
 ![Aperçu Shiply](https://i.ibb.co/vvvkSQMt/chrome-OZDL2-ALmo-A.png)
 
-# Note examinateur
-La documentation du projet est disponible dans le dossier `docs`, le readme est présent uniquement pour le démarrage rapide.
-
-## Démarrage rapide
-Normalement un zip a été fournie, donc j'ai préconfigurer le projet pour qu'il fonctionne directement.
-Il suffit de lancer la commande suivante:
-- docker compose up -d --build
-
-Compte de connexion:
-- email: admin@admin.com
-- password: password
-
-Si vous avez un problème, vous pouvez me contacter à jimmydoussain@gmail.com.
-
 # Shiply — CI/CD Manager (MVP)
 
 Shiply est une application auto‑hébergeable pour créer, exécuter et suivre des pipelines (build, tests, qualité, sécurité, déploiement) avec des runners Docker et un orchestrateur de déploiement interne (Shiply Deploy Manager).
@@ -123,6 +109,26 @@ bun run build          # build monorepo
 - API ne démarre pas: vérifier `server/.env` (hôte/port MySQL, `APP_KEY`).
 - 500 DB: exécuter les migrations/seed, vérifier que MySQL est joignable.
 - Runner: vérifier l’accès Docker (montage de `/var/run/docker.sock` ou Docker Desktop actif).
+
+## Informations complémentaires
+
+### Format du YAML à respecter dans la pipeline
+```yaml
+Format du YAML :
+version: 1
+name: build-test-deploy
+env: staging
+
+stages:
+  - name: Build
+    steps:
+      - name: Install
+        image: oven/bun:1
+        run: bun install
+      - name: Build
+        image: oven/bun:1
+        run: bun run build
+```
 
 ---
 Licence: MIT
