@@ -97,7 +97,7 @@ function Home() {
               className="w-full rounded-xl border border-border/40 bg-card/50 px-10 py-2.5 text-sm backdrop-blur-sm transition-all placeholder:text-muted-foreground/60 focus:border-primary/40 focus:bg-card/80 focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
-          <Button className="rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30" size="sm">
+          <Button onClick={handleCreateProject} className="rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30" size="sm">
             <Plus className="h-4 w-4" />
             Create
           </Button>
